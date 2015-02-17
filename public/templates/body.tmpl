@@ -1,0 +1,148 @@
+<!-- map -->
+<div id="pane">
+    <div id="container">
+        <div id="map"></div>
+        <div id="side-panel">
+            <button type="button" class="btn btn-default navbar-btn" id="clear-btn">
+                clear
+            </button>
+            <span id="progress"></span>
+            <div role="tabpanel">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" role="tablist" id="main-tabs">
+                    <li role="presentation" class="active"><a href="#info-content" aria-controls="info-content" role="tab"
+                                                              data-toggle="tab">Info</a></li>
+                    <li role="presentation"><a href="#result-content" aria-controls="" role="tab"
+                                               data-toggle="tab">Resultat</a></li>
+                    <li role="presentation"><a href="#layer-content" aria-controls="" role="tab"
+                                               data-toggle="tab">Lag</a></li>
+                    <li role="presentation"><a href="#legend-content" aria-controls="" role="tab"
+                                               data-toggle="tab">Signatur</a></li>
+                    <li role="presentation"><a href="#help-content" aria-controls="" role="tab"
+                                               data-toggle="tab">Hjælp</a></li>
+                </ul>
+
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="info-content">
+                        <div id="info-box">
+                            <div id="modal-info-body">
+                                <ul class="nav nav-tabs" id="info-tab"></ul>
+                                <div class="tab-content" id="info-pane"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="result-content">
+                        <div id="result">
+                            <div role="tabpanel">
+
+                                <!-- Nav tabs -->
+                                <ul class="nav nav-tabs" role="tablist">
+                                    <li role="presentation" class="active"><a href="#hits-content" aria-controls="hits-content" role="tab"
+                                                                              data-toggle="tab">Hits</a></li>
+                                    <li role="presentation"><a href="#nohits-content" aria-controls="nohits-content" role="tab"
+                                                               data-toggle="tab">Ingen hits</a></li>
+                                    <li role="presentation"><a href="#error-content" aria-controls="error-content" role="tab"
+                                                               data-toggle="tab">Fejl</a></li>
+                                </ul>
+
+                                <!-- Tab panes -->
+                                <div class="tab-content">
+                                    <div role="tabpanel" class="tab-pane active" id="hits-content">
+                                        <div id="hits">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                <tr>
+                                                    <th>Lag</th>
+                                                    <th>Antal hits</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="nohits-content">
+                                        <div id="nohits">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                <tr>
+                                                    <th>Lag</th>
+                                                    <th>Antal hits</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane" id="error-content">
+                                        <div id="nohits">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                <tr>
+                                                    <th>Lag</th>
+                                                    <th>Alvorlighed</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="layer-content">
+                        <div class="panel-group" id="layers" role="tablist" aria-multiselectable="true"></div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="legend-content">
+                        <div id="legend"></div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="help-content">...</div>
+                </div>
+            </div>
+            <div>
+                <textarea style="width: 100%" rows="8" id="console"></textarea>
+            </div>
+        </div>
+    </div>
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse"
+                        data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav" style="float: left">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{{Baselayers}}} <b
+                                class="caret"></b></a>
+                        <ul class="dropdown-menu" id="base-layer-list">
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav">
+                    <li>
+                        <form class="navbar-form navbar-left" role="search" onsubmit="return false;">
+                            <div class="form-group">
+                                <input type="text" id="search-input" name="search-input" class="form-control"
+                                       placeholder="{{{Search}}}">
+                            </div>
+                        </form>
+                    </li>
+                    <li>
+                        <button id="locate-btn" type="button" class="btn btn-default navbar-btn">
+                            <i class="fa fa-location-arrow"></i>
+                        </button>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div id="menu"></div>
