@@ -3,46 +3,61 @@
     <div id="container">
         <div id="map"></div>
         <div id="side-panel">
-            <button type="button" class="btn btn-default navbar-btn" id="clear-btn">
-                clear
-            </button>
-            <span id="progress"></span>
+            <div id="top">
+                <div id="buffer">
+                    <form class="form-inline">
+                        <div class="form-group">
+                            <label for="exampleInputName2">Buffer</label>
+                            <input type="text" class="form-control" placeholder="Meter">
+                        </div>
+                    </form>
+                </div>
+                <div id="progress"></div>
+            </div>
             <div role="tabpanel">
                 <!-- Nav tabs -->
                 <ul class="nav nav-tabs" role="tablist" id="main-tabs">
-                    <li role="presentation" class="active"><a href="#info-content" aria-controls="info-content" role="tab"
-                                                              data-toggle="tab">Info</a></li>
+                    <li role="presentation" class="active"><a href="#search-content" aria-controls="search-content"
+                                                              role="tab"
+                                                              data-toggle="tab">Søg</a></li>
                     <li role="presentation"><a href="#result-content" aria-controls="" role="tab"
                                                data-toggle="tab">Resultat</a></li>
+                    <li role="presentation"><a href="#info-content" aria-controls="info-content" role="tab"
+                                               data-toggle="tab">Info</a></li>
                     <li role="presentation"><a href="#layer-content" aria-controls="" role="tab"
                                                data-toggle="tab">Lag</a></li>
                     <li role="presentation"><a href="#legend-content" aria-controls="" role="tab"
                                                data-toggle="tab">Signatur</a></li>
                     <li role="presentation"><a href="#help-content" aria-controls="" role="tab"
                                                data-toggle="tab">Hjælp</a></li>
+                    <li role="presentation"><a href="#log-content" aria-controls="" role="tab"
+                                               data-toggle="tab">Log</a></li>
                 </ul>
 
                 <!-- Tab panes -->
                 <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane active" id="info-content">
-                        <div id="info-box">
-                            <div id="modal-info-body">
-                                <ul class="nav nav-tabs" id="info-tab"></ul>
-                                <div class="tab-content" id="info-pane"></div>
-                            </div>
+                    <div role="tabpanel" class="tab-pane active" id="search-content">
+                        <div id="places">
+                            <input class="typeahead" type="text" placeholder="Adresse eller matrikelnr.">
                         </div>
                     </div>
+
                     <div role="tabpanel" class="tab-pane" id="result-content">
                         <div id="result">
-                            <div role="tabpanel">
+                            <a target="_blank" href="#" class="btn btn-primary btn-xs"
+                               disabled="true">Print resultat</a>
 
+                            <div role="tabpanel">
                                 <!-- Nav tabs -->
                                 <ul class="nav nav-tabs" role="tablist">
-                                    <li role="presentation" class="active"><a href="#hits-content" aria-controls="hits-content" role="tab"
+                                    <li role="presentation" class="active"><a href="#hits-content"
+                                                                              aria-controls="hits-content" role="tab"
                                                                               data-toggle="tab">Hits</a></li>
-                                    <li role="presentation"><a href="#nohits-content" aria-controls="nohits-content" role="tab"
+                                    <li role="presentation"><a href="#nohits-content" aria-controls="nohits-content"
+                                                               role="tab"
                                                                data-toggle="tab">Ingen hits</a></li>
-                                    <li role="presentation"><a href="#error-content" aria-controls="error-content" role="tab"
+                                    <li role="presentation"><a href="#error-content" aria-controls="error-content"
+                                                               role="tab"
                                                                data-toggle="tab">Fejl</a></li>
                                 </ul>
 
@@ -75,7 +90,7 @@
                                         </div>
                                     </div>
                                     <div role="tabpanel" class="tab-pane" id="error-content">
-                                        <div id="nohits">
+                                        <div id="error">
                                             <table class="table table-hover">
                                                 <thead>
                                                 <tr>
@@ -91,6 +106,14 @@
                             </div>
                         </div>
                     </div>
+                    <div role="tabpanel" class="tab-pane" id="info-content">
+                        <div id="info-box">
+                            <div id="modal-info-body">
+                                <ul class="nav nav-tabs" id="info-tab"></ul>
+                                <div class="tab-content" id="info-pane"></div>
+                            </div>
+                        </div>
+                    </div>
                     <div role="tabpanel" class="tab-pane" id="layer-content">
                         <div class="panel-group" id="layers" role="tablist" aria-multiselectable="true"></div>
                     </div>
@@ -98,10 +121,10 @@
                         <div id="legend"></div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="help-content">...</div>
+                    <div role="tabpanel" class="tab-pane" id="log-content">
+                        <textarea style="width: 100%" rows="8" id="console"></textarea>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <textarea style="width: 100%" rows="8" id="console"></textarea>
             </div>
         </div>
     </div>

@@ -2,3 +2,6 @@
 .idea/
 node_modules/
 public.old/
+app/tmp
+
+!app/tmp/.gitignore

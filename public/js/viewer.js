@@ -14,10 +14,10 @@
 /*global schema:false */
 /*global document:false */
 /*global window:false */
-var Viewer, drawnItems;
+var Viewer;
 Viewer = function () {
     "use strict";
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, uri, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, uri, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup();
     hostname = geocloud_host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -122,6 +122,7 @@ Viewer = function () {
         position: 'bottomright'
     });
     cloud.map.addControl(zoomControl);
+    cloud.map.addLayer(drawnItems);
 
     // Start of draw
     cloud.map.on('draw:created', function (e) {
@@ -139,7 +140,6 @@ Viewer = function () {
         var geoJSON = geoJSONFromDraw();
         makeConflict(geoJSON[0], geoJSON[1]);
     });
-    drawnItems = new L.FeatureGroup();
     drawControl = new L.Control.Draw({
         position: 'bottomright',
         draw: {
@@ -168,7 +168,6 @@ Viewer = function () {
             featureGroup: drawnItems
         }
     });
-    cloud.map.addLayer(drawnItems);
     cloud.map.addControl(drawControl);
 
     var clearDrawItems = function () {
@@ -202,11 +201,13 @@ Viewer = function () {
                 hitsTable.empty();
                 noHitsTable.empty();
                 errorTable.empty();
-                $('#main-tabs a[href="#result-content"]').tab('show')
-                $.each(response, function (i, v) {
-                        if (typeof v.name === "undefined") {
-                            row = "<tr><td>" + i + "</td><td>" + v.length + "</td></tr>";
-                            if (v.length > 0) {
+                $('#main-tabs a[href="#result-content"]').tab('show');
+                $('#result .btn').removeAttr("disabled");
+                $('#result .btn').attr("href", nodeHost + "?id=" + response.file);
+                $.each(response.hits, function (i, v) {
+                        if (v.error === null) {
+                            row = "<tr><td>" + i + "</td><td>" + v.hits + "</td></tr>";
+                            if (v.hits > 0) {
                                 hitsTable.append(row)
                                 //console.log($.parseJSON(v[0].gc2_geom))
                                 //L.geoJson($.parseJSON(v[0].gc2_geom)).addTo(cloud.map);
@@ -214,7 +215,7 @@ Viewer = function () {
                                 noHitsTable.append(row)
                             }
                         } else {
-                            row = "<tr><td>" + i + "</td><td>" + v.severity + "</td></tr>";
+                            row = "<tr><td>" + i + "</td><td>" + v.error + "</td></tr>";
                             errorTable.append(row)
 
                         }
@@ -226,12 +227,130 @@ Viewer = function () {
 
 // Draw end
     init = function () {
+        var type1, type2, gids = [];
+        var komKode = "151";
+        var placeStore = new geocloud.geoJsonStore({
+            host: "http://eu1.mapcentia.com",
+            db: "dk",
+            sql: null,
+            onLoad: function () {
+                cloud.zoomToExtentOfgeoJsonStore(placeStore);
+                clearDrawItems()
+                drawnItems.addLayer(placeStore.layer);
+                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)});
+            }
+        });
+        $('#places .typeahead').typeahead({
+            highlight: false
+        }, {
+            name: 'adresse',
+            displayKey: 'value',
+            templates: {
+                header: '<h2 class="typeahead-heading">Adresser</h2>'
+            },
+            source: function (query, cb) {
+                if (query.match(/\d+/g) === null && query.match(/\s+/g) === null) {
+                    type1 = "vejnavn,bynavn";
+                }
+                if (query.match(/\d+/g) === null && query.match(/\s+/g) !== null) {
+                    type1 = "vejnavn_bynavn";
+                }
+                if (query.match(/\d+/g) !== null) {
+                    type1 = "adresse";
+                }
+                var names = [];
+
+                (function ca() {
+                    $.ajax({
+                        url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/aws/' + type1,
+                        data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase().replace(",", "")) + '","default_operator":"AND"}},"filter":{"term":{"municipalitycode":"0' + komKode + '"}}}}}',
+                        contentType: "application/json; charset=utf-8",
+                        scriptCharset: "utf-8",
+                        dataType: 'jsonp',
+                        jsonp: 'jsonp_callback',
+                        success: function (response) {
+                            $.each(response.hits.hits, function (i, hit) {
+                                var str = hit._source.properties.string;
+                                //responseType[str] = hit._type;
+                                gids[str] = hit._source.properties.gid;
+                                names.push({value: str});
+                            });
+                            if (names.length === 1 && (type1 === "vejnavn,bynavn" || type1 === "vejnavn_bynavn")) {
+                                type1 = "adresse";
+                                names = [];
+                                gids = [];
+                                ca();
+                            } else {
+                                cb(names);
+                            }
+                        }
+                    })
+                })();
+            }
+        }, {
+            name: 'matrikel',
+            displayKey: 'value',
+            templates: {
+                header: '<h2 class="typeahead-heading">Matrikel</h2>'
+            },
+            source: function (query, cb) {
+                type2 = (query.match(/\d+/g) != null) ? "jordstykke" : "ejerlav";
+                var names = [];
+                (function ca() {
+                    $.ajax({
+                        url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/matrikel/' + type2,
+                        data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase()) + '","default_operator":"AND"}},"filter":{"term":{"komkode":"' + komKode + '"}}}}}',
+                        contentType: "application/json; charset=utf-8",
+                        scriptCharset: "utf-8",
+                        dataType: 'jsonp',
+                        jsonp: 'jsonp_callback',
+                        success: function (response) {
+                            $.each(response.hits.hits, function (i, hit) {
+                                var str = hit._source.properties.string;
+                                //responseType[str] = hit._type;
+                                gids[str] = hit._source.properties.gid;
+                                names.push({value: str});
+                            });
+                            if (names.length === 1 && (type2 === "ejerlav")) {
+                                type2 = "jordstykke";
+                                names = [];
+                                gids = [];
+                                ca();
+                            } else {
+                                cb(names);
+                            }
+                        }
+                    })
+                })();
+            }
+        });
+        $('#places .typeahead').bind('typeahead:selected', function (obj, datum, name) {
+            if ((type1 === "adresse" && name === "adresse")  || (type2 === "jordstykke" && name==="matrikel")) {
+                placeStore.reset();
+
+                if (name === "matrikel") {
+                    placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM matrikel.jordstykke WHERE gid=" + gids[datum.value];
+                }
+                if (name === "adresse") {
+                    placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang WHERE gid=" + gids[datum.value];
+                }
+                placeStore.load();
+            } else {
+                setTimeout(function () {
+                    $(".typeahead").val(datum.value + " ").trigger("paste").trigger("input");
+                }, 100)
+            }
+        });
+
         var metaData, layers = {}, extent = null, i,
             socket = io.connect(nodeHost);
-        console.log(socketId);
         socket.on(socketId, function (data) {
-            console.log(data);
-            $("#console").append(data.table + ": " + data.hits + "\n");
+            $("#progress").html(data.num);
+            if (data.error === null) {
+                $("#console").append(data.num + " table: " + data.table + ", hits: " + data.hits + " , time: " + data.time + "\n");
+            } else {
+                $("#console").append(data.table + " : " + data.error + "\n");
+            }
         });
         if (typeof window.setBaseLayers !== 'object') {
             window.setBaseLayers = [
@@ -404,6 +523,7 @@ Viewer = function () {
                     layers = cloud.getVisibleLayers().split(";");
                     $("#info-tab").empty();
                     $("#info-pane").empty();
+                    clearDrawItems();
                     $.each(layers, function (index, value) {
                         if (layers[0] === "") {
                             return false;
@@ -422,6 +542,7 @@ Viewer = function () {
                             distance = 5 * res[cloud.getZoom()];
                         }
                         qstore[index] = new geocloud.sqlStore({
+                            host: window.geocloud_host,
                             db: db,
                             id: index,
                             onLoad: function () {
@@ -472,14 +593,15 @@ Viewer = function () {
                                     if (!hit) {
                                         $('#modal-info-body').hide();
                                     }
-                                    $(".tab-pane button").click(function (e) {
+                                    $("#info-content button").click(function (e) {
                                         makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0);
                                     });
                                     $('#main-tabs a[href="#info-content"]').tab('show')
                                 }
                             }
                         });
-                        cloud.addGeoJsonStore(qstore[index]);
+                        //cloud.addGeoJsonStore(qstore[index]);
+                        drawnItems.addLayer(qstore[index].layer);
                         var sql, f_geometry_column = metaDataKeys[value.split(".")[1]].f_geometry_column;
                         if (geoType === "RASTER") {
                             sql = "SELECT foo.the_geom,ST_Value(rast, foo.the_geom) As band1, ST_Value(rast, 2, foo.the_geom) As band2, ST_Value(rast, 3, foo.the_geom) As band3 " +
