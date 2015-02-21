@@ -27,13 +27,14 @@ body {
     top: 0;
     left: 0;
     z-index: 0;
+    border-right: 1px solid #ddd;
+
 }
 #side-panel {
     position: absolute;
     width: 40%;
     right: 0;
-    margin-top: 60px;
-    padding: 6px;
+    padding: 60px 6px 6px 6px;
 }
 #legend {
     position: relative;
@@ -453,7 +454,7 @@ div.olControlZoom {
 #progress{
     float: right;
 }
-#buffer{
+#buffer-container{
     float: left;
 }
 #top{
@@ -490,11 +491,12 @@ div.olControlZoom {
     padding: 8px 12px;
     font-size: 24px;
     line-height: 30px;
-    border: 2px solid #ccc;
+    border: 1px solid #ccc;
     -webkit-border-radius: 8px;
     -moz-border-radius: 8px;
     border-radius: 8px;
     outline: none;
+    margin-top: 10px;
 }
 
 .typeahead {
@@ -502,7 +504,7 @@ div.olControlZoom {
 }
 
 .typeahead:focus {
-    border: 2px solid #0097cf;
+    border: 1px solid #0097cf;
 }
 
 .tt-query {

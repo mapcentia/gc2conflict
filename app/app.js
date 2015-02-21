@@ -3,15 +3,20 @@ var express = require('express');
 var cors = require('cors')
 var pg = require('pg');
 var fs = require('fs');
+var reproject = require('reproject');
+var terraformer = require('terraformer-wkt-parser');
+var jsts = require('jsts');
+var path = require('path');
 
 var app = express();
-var conString = "postgres://postgres:1234@localhost/mydb";
-var url = "http://localhost:8383/api/v1/meta/mydb/public";
 var buffer = 0;
 var socketId;
+var db;
+var schema;
 
-app.use(cors());
-app.get('/', function (req, response) {
+//app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
@@ -24,9 +29,28 @@ app.get('/intersection', function (req, response) {
         });
         return;
     }
+    db = req.query.db;
+    schema = req.query.schema;
     buffer = req.query.buffer;
     socketId = req.query.socketid;
+    var conString = "postgres://postgres:1234@localhost/" + db;
+    var url = "http://localhost:8383/api/v1/meta/" + db + "/" + schema;
     var wkt = req.query.wkt;
+    var buffer4326;
+    var primitive = JSON.parse(terraformer.parse(wkt).toJson());
+    if (buffer > 0) {
+        var crss = {
+            "EPSG:25832": "+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs",
+            "EPSG:3857": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs",
+            "EPSG:4326": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+        };
+
+        var reader = new jsts.io.GeoJSONParser();
+        var writer = new jsts.io.GeoJSONWriter();
+
+        var geom = reader.read(reproject.reproject(primitive, "EPSG:4326", "EPSG:25832", crss));
+        buffer4326 = reproject.reproject(writer.write(geom.buffer(buffer)), "EPSG:25832", "EPSG:4326", crss);
+    }
     pg.connect(conString, function (err, client, done) {
         if (err) {
             return console.error('error fetching client from pool', err);
@@ -34,12 +58,11 @@ app.get('/intersection', function (req, response) {
         request.get(url, function (err, res, body) {
             if (!err) {
                 var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, fileName, hits = {}, hit;
-                ;
                 (function iter() {
                     geomField = metaData.data[count].f_geometry_column;
                     table = metaData.data[count].f_table_schema + "." + metaData.data[count].f_table_name;
                     if (buffer > 0) {
-                        sql = "SELECT * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
+                        sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
                         bindings = [wkt, buffer];
                     } else {
                         sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
@@ -59,7 +82,7 @@ app.get('/intersection', function (req, response) {
                                 id: socketId,
                                 error: null
                             };
-                        }else{
+                        } else {
                             hit = {
                                 table: table,
                                 hits: null,
@@ -87,7 +110,8 @@ app.get('/intersection', function (req, response) {
                             client.end();
                             response.send({
                                 hits: hits,
-                                file: fileName
+                                file: fileName,
+                                geom: buffer4326 || primitive
                             });
                             return;
                         }

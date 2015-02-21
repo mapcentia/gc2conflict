@@ -17,18 +17,18 @@
 var Viewer;
 Viewer = function () {
     "use strict";
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, uri, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup();
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, uri, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
     hostname = geocloud_host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
-    uri = geocloud.pathName;
     hash = decodeURIComponent(geocloud.urlHash);
-    db = "mydb";
-    schema = "public";
     urlVars = geocloud.urlVars;
-    nodeHost = "http://localhost:3000";
+    console.log(urlVars);
+    db = urlVars.db;
+    schema = urlVars.schema;
+    nodeHost = "";
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
@@ -79,12 +79,9 @@ Viewer = function () {
                                     classUl.append("<li><img class='legend-img' src='data:image/png;base64, " + v.classes[u].img + "' />" + className + "</li>");
                                 }
                             }
-                            // title
                             list.append($("<li>" + title + "</li>"));
                             list.append(li.append(classUl));
-
                         }
-
                     }
                 });
                 $('#legend').html(list);
@@ -123,6 +120,7 @@ Viewer = function () {
     });
     cloud.map.addControl(zoomControl);
     cloud.map.addLayer(drawnItems);
+    cloud.map.addLayer(infoItems);
 
     // Start of draw
     cloud.map.on('draw:created', function (e) {
@@ -131,10 +129,13 @@ Viewer = function () {
     });
     cloud.map.on('draw:drawstart', function (e) {
         clearDrawItems();
+        clearInfoItems();
+        drawing = true;
     });
     cloud.map.on('draw:drawstop', function (e) {
         var geoJSON = geoJSONFromDraw();
         makeConflict(geoJSON[0], geoJSON[1]);
+        drawing = false;
     });
     cloud.map.on('draw:editstop', function (e) {
         var geoJSON = geoJSONFromDraw();
@@ -151,14 +152,26 @@ Viewer = function () {
                     timeout: 1000
                 },
                 shapeOptions: {
-                    color: '#bada55'
+                    color: '#662d91'
                 },
                 showArea: true
             },
             polyline: {
-                metric: true
+                allowIntersection: true,
+                drawError: {
+                    color: '#b00b00',
+                    timeout: 1000
+                },
+                shapeOptions: {
+                    color: '#662d91'
+                }
             },
             circle: {
+                shapeOptions: {
+                    color: '#662d91'
+                }
+            },
+            rectangle: {
                 shapeOptions: {
                     color: '#662d91'
                 }
@@ -174,6 +187,13 @@ Viewer = function () {
         drawnItems.clearLayers();
     };
 
+    var clearInfoItems = function () {
+        infoItems.clearLayers();
+        $("#info-tab").empty();
+        $("#info-pane").empty();
+        $('#modal-info-body').hide();
+    };
+
     var geoJSONFromDraw = function () {
         var layer, buffer = 0;
         for (var prop in drawnItems._layers) {
@@ -182,19 +202,25 @@ Viewer = function () {
         }
         if (typeof layer._mRadius !== "undefined") {
             buffer = buffer + layer._mRadius;
+            console.log(buffer);
         }
         return [layer.toGeoJSON(), buffer];
     };
-    makeConflict = function (geoJSON, buffer) {
-        var wkt;
-        //L.geoJson(geoJSON).addTo(cloud.map);
-        wkt = Terraformer.WKT.convert(geoJSON.geometry);
+    makeConflict = function (geoJSON, buffer, zoomToBuffer) {
+        var bufferFromForm = $("#buffer").val(), showBuffer = false;
+        if ($.isNumeric(bufferFromForm)) {
+            buffer = Number(buffer) + Number(bufferFromForm);
+            showBuffer = true;
+        } else if (!$.isNumeric(bufferFromForm) && bufferFromForm !== "") {
+            alert("Buffer skal være et tal.");
+            return false;
+        }
         $.ajax({
-            url: nodeHost + "/intersection?wkt=" + wkt + "&buffer=" + buffer + "&socketid=" + socketId,
+            url: nodeHost + "/intersection",
+            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId,
             //dataType: 'jsonp',
             //jsonp: 'jsonp_callback',
             success: function (response) {
-                //console.log(response);
                 var hitsTable = $("#hits-content tbody"),
                     noHitsTable = $("#nohits-content tbody"),
                     errorTable = $("#error-content tbody"), row;
@@ -203,24 +229,34 @@ Viewer = function () {
                 errorTable.empty();
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
-                $('#result .btn').attr("href", nodeHost + "?id=" + response.file);
+                $('#result .btn').attr("href", nodeHost + "/static?id=" + response.file);
                 $.each(response.hits, function (i, v) {
                         if (v.error === null) {
                             row = "<tr><td>" + i + "</td><td>" + v.hits + "</td></tr>";
                             if (v.hits > 0) {
                                 hitsTable.append(row)
-                                //console.log($.parseJSON(v[0].gc2_geom))
-                                //L.geoJson($.parseJSON(v[0].gc2_geom)).addTo(cloud.map);
                             } else {
                                 noHitsTable.append(row)
                             }
                         } else {
                             row = "<tr><td>" + i + "</td><td>" + v.error + "</td></tr>";
                             errorTable.append(row)
-
                         }
                     }
-                )
+                );
+                var bufferGeom = L.geoJson(response.geom, {
+                    "color": "#ff7800",
+                    "weight": 1,
+                    "opacity": 0.65,
+                    "dashArray": '5,3'
+                });
+                if (showBuffer) {
+                    bufferGeom.addTo(drawnItems);
+                }
+                if (zoomToBuffer) {
+                    cloud.map.fitBounds(bufferGeom.getBounds());
+                }
+
             }
         }); // Ajax call end
     };
@@ -234,10 +270,11 @@ Viewer = function () {
             db: "dk",
             sql: null,
             onLoad: function () {
-                cloud.zoomToExtentOfgeoJsonStore(placeStore);
+                //cloud.zoomToExtentOfgeoJsonStore(placeStore);
                 clearDrawItems()
+                clearInfoItems();
                 drawnItems.addLayer(placeStore.layer);
-                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)});
+                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true);
             }
         });
         $('#places .typeahead').typeahead({
@@ -325,7 +362,7 @@ Viewer = function () {
             }
         });
         $('#places .typeahead').bind('typeahead:selected', function (obj, datum, name) {
-            if ((type1 === "adresse" && name === "adresse")  || (type2 === "jordstykke" && name==="matrikel")) {
+            if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel")) {
                 placeStore.reset();
 
                 if (name === "matrikel") {
@@ -382,6 +419,7 @@ Viewer = function () {
                 qstore[i].reset();
             });
         });
+        $('#result .btn').prop('disabled', true);
         $.ajax({
             url: geocloud_host.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
             dataType: 'jsonp',
@@ -509,6 +547,9 @@ Viewer = function () {
         });
         cloud.on("click", function (e) {
             var layers, count = 0, hit = false, event = new geocloud.clickEvent(e, cloud), distance;
+            if (drawing) {
+                return;
+            }
             if (clicktimer) {
                 clearTimeout(clicktimer);
             }
@@ -523,7 +564,6 @@ Viewer = function () {
                     layers = cloud.getVisibleLayers().split(";");
                     $("#info-tab").empty();
                     $("#info-pane").empty();
-                    clearDrawItems();
                     $.each(layers, function (index, value) {
                         if (layers[0] === "") {
                             return false;
@@ -594,14 +634,16 @@ Viewer = function () {
                                         $('#modal-info-body').hide();
                                     }
                                     $("#info-content button").click(function (e) {
+                                        clearDrawItems();
                                         makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0);
                                     });
-                                    $('#main-tabs a[href="#info-content"]').tab('show')
+                                    $('#main-tabs a[href="#info-content"]').tab('show');
+                                    clearDrawItems();
                                 }
                             }
                         });
                         //cloud.addGeoJsonStore(qstore[index]);
-                        drawnItems.addLayer(qstore[index].layer);
+                        infoItems.addLayer(qstore[index].layer);
                         var sql, f_geometry_column = metaDataKeys[value.split(".")[1]].f_geometry_column;
                         if (geoType === "RASTER") {
                             sql = "SELECT foo.the_geom,ST_Value(rast, foo.the_geom) As band1, ST_Value(rast, 2, foo.the_geom) As band2, ST_Value(rast, 3, foo.the_geom) As band3 " +
