@@ -13,6 +13,8 @@
 var Viewer;
 Viewer = function () {
     "use strict";
+    //var gc2Config = require('gc2Config');
+
     L.drawLocal = {
         draw: {
             toolbar: {
@@ -107,7 +109,7 @@ Viewer = function () {
     };
 
     var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
-    hostname = "http://localhost:8383";
+    hostname = window.gc2Config.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);

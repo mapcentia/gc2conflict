@@ -30,11 +30,19 @@ module.exports = function (grunt) {
                     "app/public/js/templates.js": ["app/public/templates/body.tmpl"]
                 }
             }
+        },
+        browserify: {
+            publish: {
+                files: {
+                    'app/public/js/bundle.js': ['app/config/browser.js']
+                }
+            }
         }
     });
     grunt.loadNpmTasks('grunt-templates-hogan');
+    grunt.loadNpmTasks('grunt-browserify');
 
-    grunt.registerTask('default', ['hogan']);
+    grunt.registerTask('default', ['hogan', 'browserify']);
 };
 
 

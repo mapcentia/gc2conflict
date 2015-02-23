@@ -8,9 +8,11 @@ var terraformer = require('terraformer-wkt-parser');
 var jsts = require('jsts');
 var path = require('path');
 var bodyParser = require('body-parser');
-var config = require('./config/main');
+var pgConfig = require('./config/pgConfig');
+var gc2Config = require('./config/gc2Config');
 
-console.log(config)
+console.log(pgConfig)
+console.log(gc2Config)
 
 var app = express();
 var buffer = 0;
@@ -41,8 +43,8 @@ app.post('/intersection', function (req, response) {
     buffer = req.body.buffer;
     socketId = req.body.socketid;
     text = req.body.text;
-    var conString = "postgres://" + config.pgUser + ":" + config.pgPw + "@" + config.pgHost + "/" + db;
-    var url = config.gc2Host + "/api/v1/meta/" + db + "/" + schema;
+    var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
+    var url = gc2Config.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
     var buffer4326;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());

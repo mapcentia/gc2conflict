@@ -1,0 +1,1 @@
+var gc2host = require('./gc2Config');
