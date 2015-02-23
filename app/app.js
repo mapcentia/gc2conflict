@@ -27,7 +27,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
-    response.sendFile(__dirname + '/tmp/' + req.body.id);
+    response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
 app.post('/intersection', function (req, response) {
     if (!req.body.wkt) {

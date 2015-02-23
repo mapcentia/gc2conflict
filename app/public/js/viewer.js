@@ -334,10 +334,8 @@ Viewer = function () {
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             method: "POST",
             success: function (response) {
-
-
+                var hitsCount = 0, noHitsCount = 0, errorCount = 0;
                 $("#result-origin").html(response.text);
-
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
@@ -348,14 +346,20 @@ Viewer = function () {
                         if (v.error === null) {
                             row = "<tr><td>" + title + "</td><td>" + v.hits + "</td><td><input type='checkbox' data-gc2-id='" + i + "' " + ($.inArray(i, visibleLayers) > -1 ? "checked" : "") + "></td></tr>";
                             if (v.hits > 0) {
-                                hitsTable.append(row)
+                                hitsTable.append(row);
+                                hitsCount++;
                             } else {
-                                noHitsTable.append(row)
+                                noHitsTable.append(row);
+                                noHitsCount++;
                             }
                         } else {
                             row = "<tr><td>" + title + "</td><td>" + v.error + "</td></tr>";
-                            errorTable.append(row)
+                            errorTable.append(row);
+                            errorCount++;
                         }
+                        $('#result-content a[href="#hits-content"] span').html(" (" + hitsCount + ")");
+                        $('#result-content a[href="#nohits-content"] span').html(" (" + noHitsCount + ")");
+                        $('#result-content a[href="#error-content"] span').html(" (" + errorCount + ")");
                     }
                 );
                 $("#result-content input[type=checkbox]").change(function (e) {
