@@ -323,6 +323,7 @@ Viewer = function () {
         $.ajax({
             url: "/intersection",
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
+            method: "POST",
             success: function (response) {
                 var hitsTable = $("#hits-content tbody"),
                     noHitsTable = $("#nohits-content tbody"),

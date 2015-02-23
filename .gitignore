@@ -3,6 +3,7 @@
 node_modules/
 public.old/
 app/tmp
+app/config/main.js
 
 !app/tmp/.gitignore
 

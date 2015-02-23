@@ -7,6 +7,10 @@ var reproject = require('reproject');
 var terraformer = require('terraformer-wkt-parser');
 var jsts = require('jsts');
 var path = require('path');
+var bodyParser = require('body-parser');
+var config = require('./config/main');
+
+console.log(config)
 
 var app = express();
 var buffer = 0;
@@ -16,13 +20,15 @@ var schema;
 var text;
 
 //app.use(cors());
+//app.use(bodyParser.json());       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
-    response.sendFile(__dirname + '/tmp/' + req.query.id);
+    response.sendFile(__dirname + '/tmp/' + req.body.id);
 });
-app.get('/intersection', function (req, response) {
-    if (!req.query.wkt) {
+app.post('/intersection', function (req, response) {
+    if (!req.body.wkt) {
         response.status(400);
         response.send({
             success: false,
@@ -30,14 +36,14 @@ app.get('/intersection', function (req, response) {
         });
         return;
     }
-    db = req.query.db;
-    schema = req.query.schema;
-    buffer = req.query.buffer;
-    socketId = req.query.socketid;
-    text = req.query.text;
-    var conString = "postgres://postgres:1234@localhost/" + db;
-    var url = "http://localhost:8383/api/v1/meta/" + db + "/" + schema;
-    var wkt = req.query.wkt;
+    db = req.body.db;
+    schema = req.body.schema;
+    buffer = req.body.buffer;
+    socketId = req.body.socketid;
+    text = req.body.text;
+    var conString = "postgres://" + config.pgUser + ":" + config.pgPw + "@" + config.pgHost + "/" + db;
+    var url = config.gc2Host + "/api/v1/meta/" + db + "/" + schema;
+    var wkt = req.body.wkt;
     var buffer4326;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
     if (buffer > 0) {
