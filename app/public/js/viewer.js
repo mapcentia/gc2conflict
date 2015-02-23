@@ -58,7 +58,7 @@ Viewer = function () {
                     tooltip: {
                         start: 'Klik for at starte linje.',
                         cont: 'Klik for at fortsætte tegning.',
-                        end: 'Klik på første punkt for at afslutte.'
+                        end: 'Klik på sidste punkt for at afslutte.'
                     }
                 },
                 rectangle: {
@@ -108,7 +108,7 @@ Viewer = function () {
         }
     };
 
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false;
     hostname = window.gc2Config.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -207,11 +207,12 @@ Viewer = function () {
         zoomControl: false
     });
     zoomControl = L.control.zoom({
-        position: 'bottomright'
+        position: 'topright'
     });
     cloud.map.addControl(zoomControl);
     cloud.map.addLayer(drawnItems);
     cloud.map.addLayer(infoItems);
+    cloud.map.addLayer(bufferItems);
 
     // Start of draw
     cloud.map.on('draw:created', function (e) {
@@ -241,7 +242,7 @@ Viewer = function () {
         drawing = true;
     });
     drawControl = new L.Control.Draw({
-        position: 'bottomright',
+        position: 'topright',
         draw: {
             polygon: {
                 title: 'Søg med en flade',
@@ -287,14 +288,20 @@ Viewer = function () {
 
     var clearDrawItems = function () {
         drawnItems.clearLayers();
+        clearBufferItems();
     };
 
     var clearInfoItems = function () {
         infoItems.clearLayers();
+        clearBufferItems();
         $("#info-tab").empty();
         $("#info-pane").empty();
         $('#modal-info-body').hide();
     };
+
+    var clearBufferItems = function(){
+        bufferItems.clearLayers();
+    }
 
     var geoJSONFromDraw = function () {
         var layer, buffer = 0;
@@ -329,6 +336,7 @@ Viewer = function () {
         hitsTable.empty();
         noHitsTable.empty();
         errorTable.empty();
+        clearBufferItems();
         $.ajax({
             url: "/intersection",
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
@@ -365,7 +373,7 @@ Viewer = function () {
                 $("#result-content input[type=checkbox]").change(function (e) {
                     switchLayer($(this).data('gc2-id'), $(this).context.checked);
                     e.stopPropagation();
-                })
+                });
                 var bufferGeom = L.geoJson(response.geom, {
                     "color": "#ff7800",
                     "weight": 1,
@@ -373,12 +381,11 @@ Viewer = function () {
                     "dashArray": '5,3'
                 });
                 if (showBuffer) {
-                    bufferGeom.addTo(drawnItems);
+                    bufferGeom.addTo(bufferItems);
                 }
                 if (zoomToBuffer) {
                     cloud.map.fitBounds(bufferGeom.getBounds());
                 }
-
             }
         }); // Ajax call end
     };
