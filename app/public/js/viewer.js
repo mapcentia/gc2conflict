@@ -106,8 +106,8 @@ Viewer = function () {
         }
     };
 
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
-    hostname = geocloud_host;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
+    hostname = "http://localhost:8383";
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -116,7 +116,6 @@ Viewer = function () {
     urlVars = geocloud.urlVars;
     db = urlVars.db;
     schema = urlVars.schema;
-    nodeHost = "";
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
@@ -322,7 +321,7 @@ Viewer = function () {
         }
         visibleLayers = cloud.getVisibleLayers().split(";");
         $.ajax({
-            url: nodeHost + "/intersection",
+            url: "/intersection",
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             success: function (response) {
                 var hitsTable = $("#hits-content tbody"),
@@ -337,7 +336,7 @@ Viewer = function () {
 
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
-                $('#result .btn').attr("href", nodeHost + "/static?id=" + response.file);
+                $('#result .btn').attr("href", "/static?id=" + response.file);
                 $.each(response.hits, function (i, v) {
                         var table = i.split(".")[1];
                         var title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
@@ -495,7 +494,7 @@ Viewer = function () {
         });
 
         var metaData, layers = {}, extent = null, i,
-            socket = io.connect(nodeHost);
+            socket = io.connect();
         socket.on(socketId, function (data) {
             $("#progress").html(data.num);
             if (data.error === null) {
@@ -536,7 +535,7 @@ Viewer = function () {
         });
         $('#result .btn').prop('disabled', true);
         $.ajax({
-            url: geocloud_host.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
+            url: hostname.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
             dataType: 'jsonp',
             scriptCharset: "utf-8",
             jsonp: 'jsonp_callback',
@@ -560,6 +559,7 @@ Viewer = function () {
                         isBaseLayer = false;
                     }
                     layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
+                        host: hostname,
                         layers: [response.data[u].f_table_schema + "." + response.data[u].f_table_name],
                         db: db,
                         isBaseLayer: isBaseLayer,
@@ -601,7 +601,7 @@ Viewer = function () {
             }
         }); // Ajax call end
         $.ajax({
-            url: geocloud_host.replace("cdn.", "") + '/api/v1/setting/' + db,
+            url: hostname.replace("cdn.", "") + '/api/v1/setting/' + db,
             dataType: 'jsonp',
             jsonp: 'jsonp_callback',
             success: function (response) {
@@ -697,7 +697,7 @@ Viewer = function () {
                             distance = 5 * res[cloud.getZoom()];
                         }
                         qstore[index] = new geocloud.sqlStore({
-                            host: window.geocloud_host,
+                            host: hostname,
                             db: db,
                             id: index,
                             onLoad: function () {
