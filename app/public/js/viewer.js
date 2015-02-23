@@ -322,22 +322,24 @@ Viewer = function () {
             return false;
         }
         visibleLayers = cloud.getVisibleLayers().split(";");
+        var hitsTable = $("#hits-content tbody"),
+            noHitsTable = $("#nohits-content tbody"),
+            errorTable = $("#error-content tbody"), row;
+
+        hitsTable.empty();
+        noHitsTable.empty();
+        errorTable.empty();
         $.ajax({
             url: "/intersection",
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             method: "POST",
             success: function (response) {
-                var hitsTable = $("#hits-content tbody"),
-                    noHitsTable = $("#nohits-content tbody"),
-                    errorTable = $("#error-content tbody"), row;
 
-                hitsTable.empty();
-                noHitsTable.empty();
-                errorTable.empty();
 
                 $("#result-origin").html(response.text);
 
                 $('#main-tabs a[href="#result-content"]').tab('show');
+                $('#result-content a[href="#hits-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
                 $('#result .btn').attr("href", "/static?id=" + response.file);
                 $.each(response.hits, function (i, v) {

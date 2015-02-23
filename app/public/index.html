@@ -47,7 +47,7 @@
         $(".center").hide();
         $("#pane").hide().fadeIn(1500);
         var max = $(document).height() - $('.tab-pane').offset().top;
-        $('.tab-pane').css('max-height', max);
+        $('.tab-pane').not("#result-content").css('max-height', max);
         $('#places').css('height', max - 30);
         $('#places .tt-dropdown-menu').css('max-height', max - 100);
     }
