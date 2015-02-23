@@ -13,6 +13,7 @@ var buffer = 0;
 var socketId;
 var db;
 var schema;
+var text;
 
 //app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -33,6 +34,7 @@ app.get('/intersection', function (req, response) {
     schema = req.query.schema;
     buffer = req.query.buffer;
     socketId = req.query.socketid;
+    text = req.query.text;
     var conString = "postgres://postgres:1234@localhost/" + db;
     var url = "http://localhost:8383/api/v1/meta/" + db + "/" + schema;
     var wkt = req.query.wkt;
@@ -100,18 +102,20 @@ app.get('/intersection', function (req, response) {
                                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                                 return v.toString(16);
                             });
-                            fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(hits, null, 4), function (err) {
+                            client.end();
+                            var report = {
+                                hits: hits,
+                                file: fileName,
+                                geom: buffer4326 || primitive,
+                                text: text
+                            };
+                            response.send(report);
+                            fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
                                 if (err) {
                                     console.log(err);
                                 } else {
                                     console.log("The file was saved!");
                                 }
-                            });
-                            client.end();
-                            response.send({
-                                hits: hits,
-                                file: fileName,
-                                geom: buffer4326 || primitive
                             });
                             return;
                         }
@@ -126,7 +130,7 @@ app.get('/intersection', function (req, response) {
         });
     });
 });
-var server = app.listen(3000, function () {
+var server = app.listen(8080, function () {
     var host = server.address().address
     var port = server.address().port
     console.log('App listening at http://%s:%s', host, port);
@@ -135,5 +139,6 @@ var io = require('socket.io')(server);
 io.on('connection', function (socket) {
     console.log(socket.id);
 });
+
 
 

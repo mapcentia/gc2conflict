@@ -483,6 +483,10 @@ div.olControlZoom {
 #places .tt-dropdown-menu {
     overflow-y: auto;
 }
+#result-origin {
+    margin-bottom: 7px;
+}
+
 .typeahead,
 .tt-query,
 .tt-hint {

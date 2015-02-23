@@ -2,14 +2,10 @@
 /*global geocloud_host:false */
 /*global $:false */
 /*global jQuery:false */
-/*global OpenLayers:false */
-/*global ol:false */
 /*global L:false */
-/*global jRespond:false */
 /*global Base64:false */
 /*global array_unique:false */
 /*global google:false */
-/*global GeoExt:false */
 /*global mygeocloud_ol:false */
 /*global schema:false */
 /*global document:false */
@@ -17,7 +13,100 @@
 var Viewer;
 Viewer = function () {
     "use strict";
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, uri, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
+    L.drawLocal = {
+        draw: {
+            toolbar: {
+                actions: {
+                    title: 'Afbryd tegning',
+                    text: 'Afbryd'
+                },
+                undo: {
+                    title: 'Slet sidste punkt tegnet.',
+                    text: 'Slet sidste punkt'
+                },
+                buttons: {
+                    polyline: 'Søg med en linje',
+                    polygon: 'Søg med en flade',
+                    rectangle: 'Søg med rektangel',
+                    circle: 'Søg med en cirkel',
+                    marker: 'Søg med et punkt'
+                }
+            },
+            handlers: {
+                circle: {
+                    tooltip: {
+                        start: 'Klik og træk for at slå cirkel.'
+                    },
+                    radius: 'Radius'
+                },
+                marker: {
+                    tooltip: {
+                        start: 'Klik på kort at sætte punkt.'
+                    }
+                },
+                polygon: {
+                    tooltip: {
+                        start: 'Klik for at starte flade.',
+                        cont: 'Klik for at fortsætte tegning.',
+                        end: 'Klik på første punkt for at afslutte.'
+                    }
+                },
+                polyline: {
+                    error: '<strong>Fejl:</strong> fladens kanter må ikke krydse!',
+                    tooltip: {
+                        start: 'Klik for at starte linje.',
+                        cont: 'Klik for at fortsætte tegning.',
+                        end: 'Klik på første punkt for at afslutte.'
+                    }
+                },
+                rectangle: {
+                    tooltip: {
+                        start: 'Klik og  træk for et tegne rektangel.'
+                    }
+                },
+                simpleshape: {
+                    tooltip: {
+                        end: 'Slip mus for at afslutte.'
+                    }
+                }
+            }
+        },
+        edit: {
+            toolbar: {
+                actions: {
+                    save: {
+                        title: 'Gem ændringer.',
+                        text: 'Gem'
+                    },
+                    cancel: {
+                        title: 'Afbryd tegning, smid alle ændringer ud.',
+                        text: 'Afbryd'
+                    }
+                },
+                buttons: {
+                    edit: 'Ændre tegning.',
+                    editDisabled: 'Ingen tegning at ændre.',
+                    remove: 'Slet tegning.',
+                    removeDisabled: 'Ingen tegning at slette.'
+                }
+            },
+            handlers: {
+                edit: {
+                    tooltip: {
+                        text: 'Træk håndtag, eller markør for at ændre tegning.',
+                        subtext: 'Klik afbryd for at omgøre ændring.'
+                    }
+                },
+                remove: {
+                    tooltip: {
+                        text: 'Klik tegning for at slette.'
+                    }
+                }
+            }
+        }
+    };
+
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, nodeHost, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), drawing = false;
     hostname = geocloud_host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -25,15 +114,16 @@ Viewer = function () {
     });
     hash = decodeURIComponent(geocloud.urlHash);
     urlVars = geocloud.urlVars;
-    console.log(urlVars);
     db = urlVars.db;
     schema = urlVars.schema;
     nodeHost = "";
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
+            $('*[data-gc2-id="' + name + '"]').prop('checked', true);
         } else {
             cloud.hideLayer(name);
+            $('*[data-gc2-id="' + name + '"]').prop('checked', false);
         }
         try {
             //history.pushState(null, null, permaLink());
@@ -134,18 +224,26 @@ Viewer = function () {
     });
     cloud.map.on('draw:drawstop', function (e) {
         var geoJSON = geoJSONFromDraw();
-        makeConflict(geoJSON[0], geoJSON[1]);
-        drawing = false;
+        if (geoJSON) {
+            makeConflict(geoJSON[0], geoJSON[1], false, "Fra tegning");
+            drawing = false;
+        }
     });
     cloud.map.on('draw:editstop', function (e) {
         var geoJSON = geoJSONFromDraw();
-        makeConflict(geoJSON[0], geoJSON[1]);
+        if (geoJSON) {
+            makeConflict(geoJSON[0], geoJSON[1], false, "Fra tegning");
+            drawing = false;
+        }
+    });
+    cloud.map.on('draw:editstart', function (e) {
+        drawing = true;
     });
     drawControl = new L.Control.Draw({
         position: 'bottomright',
         draw: {
             polygon: {
-                title: 'Draw a polygon!',
+                title: 'Søg med en flade',
                 allowIntersection: false,
                 drawError: {
                     color: '#b00b00',
@@ -157,6 +255,7 @@ Viewer = function () {
                 showArea: true
             },
             polyline: {
+                title: 'Søg med en linje',
                 allowIntersection: true,
                 drawError: {
                     color: '#b00b00',
@@ -167,11 +266,13 @@ Viewer = function () {
                 }
             },
             circle: {
+                title: 'Søg med en cirkel',
                 shapeOptions: {
                     color: '#662d91'
                 }
             },
             rectangle: {
+                title: 'Søg med en rektangel',
                 shapeOptions: {
                     color: '#662d91'
                 }
@@ -200,14 +301,18 @@ Viewer = function () {
             layer = drawnItems._layers[prop];
             break;
         }
+        if (typeof layer === "undefined") {
+            return;
+        }
         if (typeof layer._mRadius !== "undefined") {
-            buffer = buffer + layer._mRadius;
-            console.log(buffer);
+            if (typeof layer._mRadius !== "undefined") {
+                buffer = buffer + layer._mRadius;
+            }
         }
         return [layer.toGeoJSON(), buffer];
     };
-    makeConflict = function (geoJSON, buffer, zoomToBuffer) {
-        var bufferFromForm = $("#buffer").val(), showBuffer = false;
+    makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
+        var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers;
         if ($.isNumeric(bufferFromForm)) {
             buffer = Number(buffer) + Number(bufferFromForm);
             showBuffer = true;
@@ -215,35 +320,44 @@ Viewer = function () {
             alert("Buffer skal være et tal.");
             return false;
         }
+        visibleLayers = cloud.getVisibleLayers().split(";");
         $.ajax({
             url: nodeHost + "/intersection",
-            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId,
-            //dataType: 'jsonp',
-            //jsonp: 'jsonp_callback',
+            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             success: function (response) {
                 var hitsTable = $("#hits-content tbody"),
                     noHitsTable = $("#nohits-content tbody"),
                     errorTable = $("#error-content tbody"), row;
+
                 hitsTable.empty();
                 noHitsTable.empty();
                 errorTable.empty();
+
+                $("#result-origin").html(response.text);
+
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
                 $('#result .btn').attr("href", nodeHost + "/static?id=" + response.file);
                 $.each(response.hits, function (i, v) {
+                        var table = i.split(".")[1];
+                        var title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
                         if (v.error === null) {
-                            row = "<tr><td>" + i + "</td><td>" + v.hits + "</td></tr>";
+                            row = "<tr><td>" + title + "</td><td>" + v.hits + "</td><td><input type='checkbox' data-gc2-id='" + i + "' " + ($.inArray(i, visibleLayers) > -1 ? "checked" : "") + "></td></tr>";
                             if (v.hits > 0) {
                                 hitsTable.append(row)
                             } else {
                                 noHitsTable.append(row)
                             }
                         } else {
-                            row = "<tr><td>" + i + "</td><td>" + v.error + "</td></tr>";
+                            row = "<tr><td>" + title + "</td><td>" + v.error + "</td></tr>";
                             errorTable.append(row)
                         }
                     }
                 );
+                $("#result-content input[type=checkbox]").change(function (e) {
+                    switchLayer($(this).data('gc2-id'), $(this).context.checked);
+                    e.stopPropagation();
+                })
                 var bufferGeom = L.geoJson(response.geom, {
                     "color": "#ff7800",
                     "weight": 1,
@@ -263,7 +377,7 @@ Viewer = function () {
 
 // Draw end
     init = function () {
-        var type1, type2, gids = [];
+        var type1, type2, gids = [], searchString;
         var komKode = "151";
         var placeStore = new geocloud.geoJsonStore({
             host: "http://eu1.mapcentia.com",
@@ -274,7 +388,7 @@ Viewer = function () {
                 clearDrawItems()
                 clearInfoItems();
                 drawnItems.addLayer(placeStore.layer);
-                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true);
+                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
             }
         });
         $('#places .typeahead').typeahead({
@@ -371,6 +485,7 @@ Viewer = function () {
                 if (name === "adresse") {
                     placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang WHERE gid=" + gids[datum.value];
                 }
+                searchString = datum.value;
                 placeStore.load();
             } else {
                 setTimeout(function () {
@@ -592,7 +707,7 @@ Viewer = function () {
                                     $('#modal-info-body').show();
                                     var fieldConf = $.parseJSON(metaDataKeys[value.split(".")[1]].fieldconf);
                                     $("#info-tab").append('<li><a data-toggle="tab" href="#_' + index + '">' + layerTitel + '</a></li>');
-                                    $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-store="' + index + '">Søg med dette objekt</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
+                                    $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-title="' + layerTitel + '" data-gc2-store="' + index + '">Søg med dette objekt</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
 
                                     $.each(layerObj.geoJSON.features, function (i, feature) {
                                         if (fieldConf === null) {
@@ -635,7 +750,7 @@ Viewer = function () {
                                     }
                                     $("#info-content button").click(function (e) {
                                         clearDrawItems();
-                                        makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0);
+                                        makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0, false, "Fra objekt i lag '" + $(this).data('gc2-title')) + "'";
                                     });
                                     $('#main-tabs a[href="#info-content"]').tab('show');
                                     clearDrawItems();
