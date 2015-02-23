@@ -386,7 +386,7 @@ Viewer = function () {
 // Draw end
     init = function () {
         var type1, type2, gids = [], searchString;
-        var komKode = "151";
+        var komKode = window.gc2Config.komKode;
         var placeStore = new geocloud.geoJsonStore({
             host: "http://eu1.mapcentia.com",
             db: "dk",
