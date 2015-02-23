@@ -37,12 +37,26 @@ module.exports = function (grunt) {
                     'app/public/js/bundle.js': ['app/config/browser.js']
                 }
             }
+        },
+        gitpull: {
+            production: {
+                options: {}
+            }
+        },
+        gitreset: {
+            production: {
+                options: {
+                    hard: true
+                }
+            }
         }
     });
     grunt.loadNpmTasks('grunt-templates-hogan');
     grunt.loadNpmTasks('grunt-browserify');
+    grunt.loadNpmTasks('grunt-git');
 
     grunt.registerTask('default', ['hogan', 'browserify']);
+    grunt.registerTask('production', ['gitreset', 'gitpull', 'hogan', 'browserify']);
 };
 
 

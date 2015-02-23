@@ -31,6 +31,7 @@
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-browserify": "^3.4.0",
+    "grunt-git": "^0.3.4",
     "grunt-templates-hogan": "^0.2.5"
   }
 }
