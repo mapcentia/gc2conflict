@@ -1,0 +1,21 @@
+html
+    head
+        head
+            title #{json.text}
+            link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css')
+        body
+            div(class="container-fluid")
+                div(class="row")
+                    div(class="col-xs-12")
+                        h2 #{json.text}
+                        p #{json.dateTime}
+                        h3 Hits
+                        table(class="table")
+                            each val, key in json.hits
+                                tr
+                                    td #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name} (#{val.hits})
+                        h3 Ingen hits
+                        table(class="table")
+                            each val, key in json.noHits
+                                tr
+                                    td #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name}

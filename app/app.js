@@ -8,11 +8,9 @@ var terraformer = require('terraformer-wkt-parser');
 var jsts = require('jsts');
 var path = require('path');
 var bodyParser = require('body-parser');
+var moment = require('moment');
 var pgConfig = require('./config/pgConfig');
 var gc2Config = require('./config/gc2Config');
-
-console.log(pgConfig)
-console.log(gc2Config)
 
 var app = express();
 var buffer = 0;
@@ -21,14 +19,54 @@ var db;
 var schema;
 var text;
 
+// Set locale for date/time string
+moment.locale("da");
+
 //app.use(cors());
-//app.use(bodyParser.json());       // to support JSON-encoded bodies
+
 app.use(bodyParser.urlencoded({extended: true}));
+
+app.set('views', __dirname + '/views');
+
+app.set('view engine', 'jade');
+
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
+
+app.get('/html', function (req, res) {
+    fs.readFile(__dirname + '/tmp/' + req.query.id, 'utf8', function (err, data) {
+        if (err) {
+            return console.log(err);
+        }
+        var obj = JSON.parse(data), hits = [], noHits = [], json, metaData, metaDataKeys = [];
+        metaData = obj.metaData;
+        for (var i = 0; i < metaData.data.length; i++) {
+            metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
+        }
+        for (var prop in obj.hits) {
+            if (obj.hits.hasOwnProperty(prop)) {
+                if (obj.hits[prop].hits > 0){
+                    hits.push(obj.hits[prop]);
+                } else {
+                    noHits.push(obj.hits[prop]);
+                }
+            }
+        }
+        json = {
+            hits: hits,
+            noHits: noHits,
+            text: obj.text,
+            dateTime: obj.dateTime,
+            metaDataKeys: metaDataKeys
+        };
+        res.render('static', {layout: 'layout', json: json});
+    });
+});
+
 app.post('/intersection', function (req, response) {
     if (!req.body.wkt) {
         response.status(400);
@@ -118,6 +156,9 @@ app.post('/intersection', function (req, response) {
                                 text: text
                             };
                             response.send(report);
+                            // Add meta data and date/time to report before writing to file
+                            report.metaData = metaData;
+                            report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
                             fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
                                 if (err) {
                                     console.log(err);

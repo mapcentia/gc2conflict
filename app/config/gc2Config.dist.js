@@ -1,6 +1,4 @@
-pgConfig = {
-    host: "localhost",
-    user: "postgres",
-    pw: "1234"
+gc2Config = {
+    host: "http://localhost:8383"
 };
-module.exports = pgConfig;
+module.exports = gc2Config;

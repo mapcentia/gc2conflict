@@ -13,8 +13,6 @@
 var Viewer;
 Viewer = function () {
     "use strict";
-    //var gc2Config = require('gc2Config');
-
     L.drawLocal = {
         draw: {
             toolbar: {
@@ -107,8 +105,7 @@ Viewer = function () {
             }
         }
     };
-
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], permaLink, anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false;
     hostname = window.gc2Config.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -126,19 +123,11 @@ Viewer = function () {
             cloud.hideLayer(name);
             $('*[data-gc2-id="' + name + '"]').prop('checked', false);
         }
-        try {
-            //history.pushState(null, null, permaLink());
-        } catch (e) {
-        }
         addLegend();
     };
     setBaseLayer = function (str) {
         cloud.setBaseLayer(str);
         addLegend();
-        try {
-            //history.pushState(null, null, permaLink());
-        } catch (e) {
-        }
     };
     addLegend = function () {
         var param = 'l=' + cloud.getVisibleLayers(true);
@@ -178,10 +167,6 @@ Viewer = function () {
                 $('#legend').html(list);
             }
         });
-    };
-
-    permaLink = function () {
-        return "/apps/viewer/" + db + "/" + schema + "/" + (typeof urlVars.i === "undefined" ? "" : "?i=" + urlVars.i.split("#")[0]) + anchor();
     };
 
     anchor = function () {
@@ -299,9 +284,9 @@ Viewer = function () {
         $('#modal-info-body').hide();
     };
 
-    var clearBufferItems = function(){
+    var clearBufferItems = function () {
         bufferItems.clearLayers();
-    }
+    };
 
     var geoJSONFromDraw = function () {
         var layer, buffer = 0;
@@ -331,7 +316,8 @@ Viewer = function () {
         visibleLayers = cloud.getVisibleLayers().split(";");
         var hitsTable = $("#hits-content tbody"),
             noHitsTable = $("#nohits-content tbody"),
-            errorTable = $("#error-content tbody"), row;
+            errorTable = $("#error-content tbody"),
+            row;
 
         hitsTable.empty();
         noHitsTable.empty();
@@ -347,10 +333,10 @@ Viewer = function () {
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
                 $('#result .btn').removeAttr("disabled");
-                $('#result .btn').attr("href", "/static?id=" + response.file);
+                $('#result .btn').attr("href", "/html?id=" + response.file);
                 $.each(response.hits, function (i, v) {
-                        var table = i.split(".")[1];
-                        var title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
+                        var table = i.split(".")[1],
+                            title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
                         if (v.error === null) {
                             row = "<tr><td>" + title + "</td><td>" + v.hits + "</td><td><input type='checkbox' data-gc2-id='" + i + "' " + ($.inArray(i, visibleLayers) > -1 ? "checked" : "") + "></td></tr>";
                             if (v.hits > 0) {
@@ -392,20 +378,20 @@ Viewer = function () {
 
 // Draw end
     init = function () {
-        var type1, type2, gids = [], searchString;
-        var komKode = window.gc2Config.komKode;
-        var placeStore = new geocloud.geoJsonStore({
-            host: "http://eu1.mapcentia.com",
-            db: "dk",
-            sql: null,
-            onLoad: function () {
-                //cloud.zoomToExtentOfgeoJsonStore(placeStore);
-                clearDrawItems()
-                clearInfoItems();
-                drawnItems.addLayer(placeStore.layer);
-                makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
-            }
-        });
+        var type1, type2, gids = [], searchString,
+            komKode = urlVars.komkode,
+            placeStore = new geocloud.geoJsonStore({
+                host: "http://eu1.mapcentia.com",
+                db: "dk",
+                sql: null,
+                onLoad: function () {
+                    //cloud.zoomToExtentOfgeoJsonStore(placeStore);
+                    clearDrawItems()
+                    clearInfoItems();
+                    drawnItems.addLayer(placeStore.layer);
+                    makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
+                }
+            });
         $('#places .typeahead').typeahead({
             highlight: false
         }, {
@@ -437,7 +423,6 @@ Viewer = function () {
                         success: function (response) {
                             $.each(response.hits.hits, function (i, hit) {
                                 var str = hit._source.properties.string;
-                                //responseType[str] = hit._type;
                                 gids[str] = hit._source.properties.gid;
                                 names.push({value: str});
                             });
@@ -460,8 +445,8 @@ Viewer = function () {
                 header: '<h2 class="typeahead-heading">Matrikel</h2>'
             },
             source: function (query, cb) {
-                type2 = (query.match(/\d+/g) != null) ? "jordstykke" : "ejerlav";
                 var names = [];
+                type2 = (query.match(/\d+/g) != null) ? "jordstykke" : "ejerlav";
                 (function ca() {
                     $.ajax({
                         url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/matrikel/' + type2,
@@ -473,7 +458,6 @@ Viewer = function () {
                         success: function (response) {
                             $.each(response.hits.hits, function (i, hit) {
                                 var str = hit._source.properties.string;
-                                //responseType[str] = hit._type;
                                 gids[str] = hit._source.properties.gid;
                                 names.push({value: str});
                             });
