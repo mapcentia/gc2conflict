@@ -750,7 +750,7 @@ Viewer = function () {
                                     }
                                     $("#info-content button").click(function (e) {
                                         clearDrawItems();
-                                        makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0, false, "Fra objekt i lag '" + $(this).data('gc2-title')) + "'";
+                                        makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0, false, "Fra objekt i laget: " + $(this).data('gc2-title'));
                                     });
                                     $('#main-tabs a[href="#info-content"]').tab('show');
                                     clearDrawItems();
