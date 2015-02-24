@@ -679,6 +679,7 @@ Viewer = function () {
                     layers = cloud.getVisibleLayers().split(";");
                     $("#info-tab").empty();
                     $("#info-pane").empty();
+                    $("#info-content .alert").hide();
                     $.each(layers, function (index, value) {
                         if (layers[0] === "") {
                             return false;
