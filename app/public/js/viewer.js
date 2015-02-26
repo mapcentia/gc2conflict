@@ -294,6 +294,7 @@ Viewer = function () {
             layer = drawnItems._layers[prop];
             break;
         }
+        console.log(layer)
         if (typeof layer === "undefined") {
             return;
         }
@@ -700,6 +701,7 @@ Viewer = function () {
                         qstore[index] = new geocloud.sqlStore({
                             host: hostname,
                             db: db,
+                            clickable: false,
                             id: index,
                             onLoad: function () {
                                 var layerObj = qstore[this.id], out = [], fieldLabel;
