@@ -294,7 +294,6 @@ Viewer = function () {
             layer = drawnItems._layers[prop];
             break;
         }
-        console.log(layer)
         if (typeof layer === "undefined") {
             return;
         }
