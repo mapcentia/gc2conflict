@@ -23,9 +23,8 @@ body {
 
 #map {
     position: absolute;
-    width: 60%;
     height: 100%;
-    top: 0;
+    right: 400px;
     left: 0;
     z-index: 0;
     border-right: 1px solid #ddd;
@@ -33,8 +32,9 @@ body {
 }
 #side-panel {
     position: absolute;
-    width: 40%;
+    width: 400px;
     right: 0;
+    top: 0;
     padding: 16px 6px 6px 6px;
 }
 #legend {
