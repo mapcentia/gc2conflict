@@ -49,7 +49,7 @@ app.get('/html', function (req, res) {
         }
         for (var prop in obj.hits) {
             if (obj.hits.hasOwnProperty(prop)) {
-                if (obj.hits[prop].hits > 0){
+                if (obj.hits[prop].hits > 0) {
                     hits.push(obj.hits[prop]);
                 } else {
                     noHits.push(obj.hits[prop]);
@@ -105,71 +105,81 @@ app.post('/intersection', function (req, response) {
         }
         request.get(url, function (err, res, body) {
             if (!err) {
-                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, fileName, hits = {}, hit;
-                (function iter() {
-                    geomField = metaData.data[count].f_geometry_column;
-                    table = metaData.data[count].f_table_schema + "." + metaData.data[count].f_table_name;
-                    if (buffer > 0) {
-                        sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
-                        bindings = [wkt, buffer];
-                    } else {
-                        sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
-                        bindings = [wkt];
+                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, fileName, hits = {}, hit, layersCount = 0;
+                // Count layers
+                for (var i = 0; i < metaData.data.length; i = i + 1) {
+                    if (metaData.data[i].type !== "RASTER"){
+                        layersCount = layersCount + 1;
                     }
-                    startTime = new Date().getTime();
-                    client.query(sql, bindings, function (err, result) {
-                        var time = new Date().getTime() - startTime;
-                        count++;
+                }
+                console.log(layersCount);
 
-                        if (!err) {
-                            hit = {
-                                table: table,
-                                hits: result.rows.length,
-                                num: count + "/" + metaData.data.length,
-                                time: time,
-                                id: socketId,
-                                error: null
-                            };
+                (function iter() {
+                    if (metaData.data[count].type !== "RASTER") {
+                        geomField = metaData.data[count].f_geometry_column;
+                        table = metaData.data[count].f_table_schema + "." + metaData.data[count].f_table_name;
+                        if (buffer > 0) {
+                            sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
+                            bindings = [wkt, buffer];
                         } else {
-                            hit = {
-                                table: table,
-                                hits: null,
-                                num: null,
-                                time: time,
-                                id: socketId,
-                                error: err.severity,
-                                hint: err.hint
-                            };
+                            sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
+                            bindings = [wkt];
                         }
-                        hits[table] = hit;
-                        io.emit(socketId, hit);
-                        if (metaData.data.length === count) {
-                            fileName = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                                return v.toString(16);
-                            });
-                            client.end();
-                            var report = {
-                                hits: hits,
-                                file: fileName,
-                                geom: buffer4326 || primitive,
-                                text: text
-                            };
-                            response.send(report);
-                            // Add meta data and date/time to report before writing to file
-                            report.metaData = metaData;
-                            report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
-                            fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
-                                if (err) {
-                                    console.log(err);
-                                } else {
-                                    console.log("The file was saved!");
-                                }
-                            });
-                            return;
-                        }
-                        iter();
-                    });
+                        startTime = new Date().getTime();
+                        client.query(sql, bindings, function (err, result) {
+                            var time = new Date().getTime() - startTime;
+                            count++;
+
+                            if (!err) {
+                                hit = {
+                                    table: table,
+                                    hits: result.rows.length,
+                                    num: count + "/" + metaData.data.length,
+                                    time: time,
+                                    id: socketId,
+                                    error: null
+                                };
+                            } else {
+                                hit = {
+                                    table: table,
+                                    hits: null,
+                                    num: null,
+                                    time: time,
+                                    id: socketId,
+                                    error: err.severity,
+                                    hint: err.hint
+                                };
+                            }
+                            hits[table] = hit;
+                            io.emit(socketId, hit);
+                            if (layersCount === count) {
+                                fileName = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                                    return v.toString(16);
+                                });
+                                client.end();
+                                var report = {
+                                    hits: hits,
+                                    file: fileName,
+                                    geom: buffer4326 || primitive,
+                                    text: text
+                                };
+                                response.send(report);
+                                // Add meta data and date/time to report before writing to file
+                                report.metaData = metaData;
+                                report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
+                                fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
+                                    if (err) {
+                                        console.log(err);
+                                    } else {
+                                        console.log("The file was saved!");
+                                    }
+                                });
+                                return;
+                            }
+                            iter();
+                        });
+                    }
                 })();
                 //winston.log('info', resultsObj.message, resultsObj);
             } else {
