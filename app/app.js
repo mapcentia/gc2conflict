@@ -134,7 +134,7 @@ app.post('/intersection', function (req, response) {
                                 hit = {
                                     table: table,
                                     hits: result.rows.length,
-                                    num: count + "/" + metaData.data.length,
+                                    num: count + "/" + layersCount,
                                     time: time,
                                     id: socketId,
                                     error: null
@@ -179,6 +179,8 @@ app.post('/intersection', function (req, response) {
                             }
                             iter();
                         });
+                    } else {
+                        iter();
                     }
                 })();
                 //winston.log('info', resultsObj.message, resultsObj);
