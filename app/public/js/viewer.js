@@ -323,12 +323,14 @@ Viewer = function () {
         noHitsTable.empty();
         errorTable.empty();
         clearBufferItems();
+        $("#spinner span").show();
         $.ajax({
             url: "/intersection",
             data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             method: "POST",
             success: function (response) {
                 var hitsCount = 0, noHitsCount = 0, errorCount = 0;
+                $("#spinner span").hide();
                 $("#result-origin").html(response.text);
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');

@@ -452,9 +452,26 @@ div.olControlZoom {
         transform: translateX(-40px);
     }
 }
-#progress{
+#progress-container{
     float: right;
 }
+#spinner{
+    display: inline-block;
+    margin-left: 3px;
+    width: 20px;
+
+}
+#spinner span{
+    display: none;
+}
+
+#spinner span img {
+    position: relative;
+    width: 15px;
+    height: 15px;
+    top: -1px;
+}
+
 #buffer-container{
     float: left;
 }
