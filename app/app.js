@@ -13,7 +13,6 @@ var pgConfig = require('./config/pgConfig');
 var gc2Config = require('./config/gc2Config');
 var http = require('http');
 var querystring = require('querystring');
-var jsreport = require("jsreport");
 
 var app = express();
 var buffer = 0;
@@ -23,11 +22,18 @@ var schema;
 var text;
 var fileName;
 var baseLayer;
+var addr;
 
 // Set locale for date/time string
 moment.locale("da");
 
 //app.use(cors());
+
+require('dns').lookup(require('os').hostname(), function (err, add, fam) {
+    addr = add;
+    console.log(require('os').hostname());
+    console.log('addr: ' + add);
+});
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -42,18 +48,20 @@ app.get('/static', function (req, response) {
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
 
-app.get('/pdf', function (req, res) {
-    request.get('http://127.0.0.1:8080/html?id=' + req.query.id, function (err, res, html) {
-        if (err) {
-            throw err;
-        }
-        jsreport.bootstrapper(jsreport.renderDefaults).start().then(function(conf) {
-                conf.reporter.render(html).then(function(out) {
-                    out.result.pipe(res);
-                }).fail(function(e) {
-                    console.log(e);
-                });
+app.get('/pdf', function (req, response) {
+    var url = "http://localhost:8181/?url=127.0.0.1:8080/html?format=A4&id=" + req.query.id;
+    http.get(url, function (res) {
+        var chunks = [];
+        res.on('data', function (chunk) {
+            chunks.push(chunk);
         });
+        res.on("end", function () {
+            var jsfile = new Buffer.concat(chunks);
+            response.header('content-type', 'application/pdf');
+            response.send(jsfile);
+        });
+    }).on("error", function () {
+        callback(null);
     });
 });
 
@@ -82,7 +90,8 @@ app.get('/html', function (req, res) {
             text: obj.text,
             dateTime: obj.dateTime,
             metaDataKeys: metaDataKeys,
-            id: req.query.id
+            id: req.query.id,
+            addr: addr
         };
         res.render('static', {layout: 'layout', json: json});
     });
@@ -128,7 +137,7 @@ app.post('/intersection', function (req, response) {
 
     // Start static map
     var postData = querystring.stringify({
-        size: '500x400',
+        size: '700x500',
         baselayer: baseLayer,
         layers: 'false',
         sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326) + "',4326)"
