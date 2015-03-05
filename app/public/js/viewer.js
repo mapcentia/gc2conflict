@@ -105,7 +105,7 @@ Viewer = function () {
             }
         }
     };
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false, searchFinish, staticMapFinish;
     hostname = window.gc2Config.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -295,6 +295,14 @@ Viewer = function () {
         }
         return [layer.toGeoJSON(), buffer];
     };
+
+    var showPrintBtn = function(){
+        if (searchFinish && staticMapFinish) {
+            $('#result .btn').removeAttr("disabled");
+            $("#print-spinner").hide();
+            searchFinish = staticMapFinish = false;
+        }
+    };
     makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
         var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers, baseLayer;
         if ($.isNumeric(bufferFromForm)) {
@@ -328,7 +336,9 @@ Viewer = function () {
                 $("#result-origin").html(response.text);
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
-                $('#result .btn').attr("href", "/html?id=" + response.file);
+                $('#result .btn').attr("href", "/html?id=" + response.file)
+                searchFinish = true;
+                showPrintBtn();
                 $.each(response.hits, function (i, v) {
                         var table = i.split(".")[1],
                             title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
@@ -500,8 +510,8 @@ Viewer = function () {
                 }
             }
             if (typeof data.static !== "undefined") {
-                $("#print-spinner").hide();
-                $('#result .btn').removeAttr("disabled");
+                staticMapFinish = true;
+                showPrintBtn();
             }
         });
         // Set the default buffer

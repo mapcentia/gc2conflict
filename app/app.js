@@ -29,12 +29,6 @@ moment.locale("da");
 
 //app.use(cors());
 
-require('dns').lookup(require('os').hostname(), function (err, add, fam) {
-    addr = add;
-    console.log(require('os').hostname());
-    console.log('addr: ' + add);
-});
-
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set('views', __dirname + '/views');
@@ -145,9 +139,9 @@ app.post('/intersection', function (req, response) {
 
     options = {
         method: 'POST',
-        host: '192.168.33.10',
+        host: '54.171.150.242',
         port: 80,
-        path: '/api/v1/staticmap/png/' + db,
+        path: '/api/v1/staticmap/png/odder',
         encoding: null
     };
 
