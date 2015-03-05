@@ -9,6 +9,7 @@ html
                     div(class="col-xs-12")
                         h2 #{json.text}
                         p #{json.dateTime}
+                        img(src= "/tmp/" + json.id + ".png")
                         h3 Hits
                         table(class="table")
                             each val, key in json.hits

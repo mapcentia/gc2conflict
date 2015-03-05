@@ -241,17 +241,7 @@ Viewer = function () {
                 },
                 showArea: true
             },
-            polyline: {
-                title: 'Søg med en linje',
-                allowIntersection: true,
-                drawError: {
-                    color: '#b00b00',
-                    timeout: 1000
-                },
-                shapeOptions: {
-                    color: '#662d91'
-                }
-            },
+            polyline: false,
             circle: {
                 title: 'Søg med en cirkel',
                 shapeOptions: {
@@ -266,7 +256,8 @@ Viewer = function () {
             }
         },
         edit: {
-            featureGroup: drawnItems
+            featureGroup: drawnItems,
+            remove: false
         }
     });
     cloud.map.addControl(drawControl);
@@ -305,7 +296,7 @@ Viewer = function () {
         return [layer.toGeoJSON(), buffer];
     };
     makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
-        var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers;
+        var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers, baseLayer;
         if ($.isNumeric(bufferFromForm)) {
             buffer = Number(buffer) + Number(bufferFromForm);
             showBuffer = true;
@@ -314,6 +305,7 @@ Viewer = function () {
             return false;
         }
         visibleLayers = cloud.getVisibleLayers().split(";");
+        baseLayer = cloud.getBaseLayerName().toUpperCase();
         var hitsTable = $("#hits-content tbody"),
             noHitsTable = $("#nohits-content tbody"),
             errorTable = $("#error-content tbody"),
@@ -324,9 +316,11 @@ Viewer = function () {
         errorTable.empty();
         clearBufferItems();
         $("#spinner span").show();
+        $("#print-spinner").show();
+        $('#result .btn').attr('disabled', true);
         $.ajax({
             url: "/intersection",
-            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
+            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&baselayer=" + baseLayer + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
             method: "POST",
             success: function (response) {
                 var hitsCount = 0, noHitsCount = 0, errorCount = 0;
@@ -334,7 +328,6 @@ Viewer = function () {
                 $("#result-origin").html(response.text);
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
-                $('#result .btn').removeAttr("disabled");
                 $('#result .btn').attr("href", "/html?id=" + response.file);
                 $.each(response.hits, function (i, v) {
                         var table = i.split(".")[1],
@@ -498,13 +491,21 @@ Viewer = function () {
         var metaData, layers = {}, extent = null, i,
             socket = io.connect();
         socket.on(socketId, function (data) {
-            $("#progress").html(data.num);
-            if (data.error === null) {
-                $("#console").append(data.num + " table: " + data.table + ", hits: " + data.hits + " , time: " + data.time + "\n");
-            } else {
-                $("#console").append(data.table + " : " + data.error + "\n");
+            if (typeof data.num !== "undefined") {
+                $("#progress").html(data.num);
+                if (data.error === null) {
+                    $("#console").append(data.num + " table: " + data.table + ", hits: " + data.hits + " , time: " + data.time + "\n");
+                } else {
+                    $("#console").append(data.table + " : " + data.error + "\n");
+                }
+            }
+            if (typeof data.static !== "undefined") {
+                $("#print-spinner").hide();
+                $('#result .btn').removeAttr("disabled");
             }
         });
+        // Set the default buffer
+        $("#buffer").val("10");
         if (typeof window.setBaseLayers !== 'object') {
             window.setBaseLayers = [
                 {"id": "mapQuestOSM", "name": "MapQuset OSM"},
@@ -535,7 +536,6 @@ Viewer = function () {
                 qstore[i].reset();
             });
         });
-        $('#result .btn').prop('disabled', true);
         $.ajax({
             url: hostname.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
             dataType: 'jsonp',

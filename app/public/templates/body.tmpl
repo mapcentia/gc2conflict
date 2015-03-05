@@ -5,12 +5,12 @@
         <div id="side-panel">
             <div id="top">
                 <div id="buffer-container">
-                    <form class="form-inline">
+                    <div class="form-inline">
                         <div class="form-group">
                             <label for="buffer">Buffer</label>
                             <input id="buffer" type="text" class="form-control" placeholder="Meter">
                         </div>
-                    </form>
+                    </div>
                 </div>
                 <div id="progress-container"><span id="progress"></span><span id="spinner">&nbsp;<span><img src='http://www.gifstache.com/images/ajax_loader.gif' class='spinner'/></span></span></div>
             </div>
@@ -46,7 +46,8 @@
                         <div id="result">
                             <div id="result-origin"></div>
                             <a target="_blank" href="#" class="btn btn-primary btn-xs"
-                               disabled="true">Print resultat</a>
+                               disabled="true"><div>Print resultat</div><img src='http://www.gifstache.com/images/ajax_loader.gif' id='print-spinner'/></a>
+
 
                             <div role="tabpanel">
                                 <!-- Nav tabs -->

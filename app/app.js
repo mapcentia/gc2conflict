@@ -11,6 +11,9 @@ var bodyParser = require('body-parser');
 var moment = require('moment');
 var pgConfig = require('./config/pgConfig');
 var gc2Config = require('./config/gc2Config');
+var http = require('http');
+var querystring = require('querystring');
+var jsreport = require("jsreport");
 
 var app = express();
 var buffer = 0;
@@ -18,6 +21,8 @@ var socketId;
 var db;
 var schema;
 var text;
+var fileName;
+var baseLayer;
 
 // Set locale for date/time string
 moment.locale("da");
@@ -35,6 +40,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
     response.sendFile(__dirname + '/tmp/' + req.query.id);
+});
+
+app.get('/pdf', function (req, res) {
+    request.get('http://127.0.0.1:8080/html?id=' + req.query.id, function (err, res, html) {
+        if (err) {
+            throw err;
+        }
+        jsreport.bootstrapper(jsreport.renderDefaults).start().then(function(conf) {
+                conf.reporter.render(html).then(function(out) {
+                    out.result.pipe(res);
+                }).fail(function(e) {
+                    console.log(e);
+                });
+        });
+    });
 });
 
 app.get('/html', function (req, res) {
@@ -61,7 +81,8 @@ app.get('/html', function (req, res) {
             noHits: noHits,
             text: obj.text,
             dateTime: obj.dateTime,
-            metaDataKeys: metaDataKeys
+            metaDataKeys: metaDataKeys,
+            id: req.query.id
         };
         res.render('static', {layout: 'layout', json: json});
     });
@@ -81,6 +102,7 @@ app.post('/intersection', function (req, response) {
     buffer = req.body.buffer;
     socketId = req.body.socketid;
     text = req.body.text;
+    baseLayer = req.body.baselayer;
     var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
     var url = gc2Config.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
@@ -99,13 +121,59 @@ app.post('/intersection', function (req, response) {
         var geom = reader.read(reproject.reproject(primitive, "EPSG:4326", "EPSG:25832", crss));
         buffer4326 = reproject.reproject(writer.write(geom.buffer(buffer)), "EPSG:25832", "EPSG:4326", crss);
     }
+    fileName = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+
+    // Start static map
+    var postData = querystring.stringify({
+        size: '500x400',
+        baselayer: baseLayer,
+        layers: 'false',
+        sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326) + "',4326)"
+    });
+
+    options = {
+        method: 'POST',
+        host: '192.168.33.10',
+        port: 80,
+        path: '/api/v1/staticmap/png/' + db,
+        encoding: null
+    };
+
+    var staticMapReq = http.request(options, function (res) {
+        var imagedata = '';
+        res.setEncoding('binary');
+
+        res.on('data', function (chunk) {
+            imagedata += chunk
+        });
+
+        res.on('end', function () {
+            fs.writeFile(__dirname + "/public/tmp/" + fileName + ".png", imagedata, 'binary', function (err) {
+                if (err) throw err;
+                console.log('Image saved.')
+            });
+            io.emit(socketId, {static: true});
+        });
+
+        res.on('error', function () {
+            console.log("Static map error");
+            io.emit(socketId, {static: true});
+        });
+
+    });
+    staticMapReq.write(postData);
+    staticMapReq.end();
+
     pg.connect(conString, function (err, client, done) {
         if (err) {
             return console.error('error fetching client from pool', err);
         }
         request.get(url, function (err, res, body) {
             if (!err) {
-                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, fileName, hits = {}, hit, metaDataFinal = {data: []};
+                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []};
                 // Count layers
                 for (var i = 0; i < metaData.data.length; i = i + 1) {
                     if (metaData.data[i].type !== "RASTER") {
@@ -151,15 +219,12 @@ app.post('/intersection', function (req, response) {
                         hits[table] = hit;
                         io.emit(socketId, hit);
                         if (metaDataFinal.data.length === count) {
-                            fileName = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                                return v.toString(16);
-                            });
                             client.end();
                             var report = {
                                 hits: hits,
                                 file: fileName,
                                 geom: buffer4326 || primitive,
+                                primitive: primitive,
                                 text: text
                             };
                             response.send(report);
@@ -170,7 +235,7 @@ app.post('/intersection', function (req, response) {
                                 if (err) {
                                     console.log(err);
                                 } else {
-                                    console.log("The file was saved!");
+                                    console.log("Repport saved");
                                 }
                             });
                             return;
@@ -181,15 +246,16 @@ app.post('/intersection', function (req, response) {
                 })();
                 //winston.log('info', resultsObj.message, resultsObj);
             } else {
-                console.log("Ups")
+                console.log("Ups");
                 //winston.log('error', err);
             }
         });
     });
-});
+})
+;
 var server = app.listen(8080, function () {
-    var host = server.address().address
-    var port = server.address().port
+    var host = server.address().address;
+    var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
 });
 var io = require('socket.io')(server);

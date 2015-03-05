@@ -180,7 +180,8 @@ input[type="radio"], input[type="checkbox"] {
 #result {
     opacity: 1 !important;
     background-color: transparent !important;
-    padding: 10px
+    padding: 10px;
+    position: relative;
 }
 
 .pac-container {
@@ -471,6 +472,14 @@ div.olControlZoom {
     height: 15px;
     top: -1px;
 }
+#print-spinner {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: 3px;
+    left: 23px;
+    display: none;
+}
 
 #buffer-container{
     float: left;
@@ -481,6 +490,8 @@ div.olControlZoom {
 }
 #result .btn {
     margin-bottom: 3px;
+    position: relative;
+
 }
 .typeahead {
     height: auto !important;
