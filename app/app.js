@@ -143,8 +143,11 @@ app.post('/intersection', function (req, response) {
         method: 'POST',
         host: gc2Config.staticMapHost,
         port: 80,
-        path: '/api/v1/staticmap/png/odder',
-        encoding: null
+        path: '/api/v1/staticmap/png/' + db,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': postData.length
+        }
     };
 
     var staticMapReq = http.request(options, function (res) {
