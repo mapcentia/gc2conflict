@@ -111,7 +111,7 @@ app.post('/intersection', function (req, response) {
     var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
     var url = gc2Config.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
-    var buffer4326;
+    var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
     if (buffer > 0) {
         var crss = {
@@ -136,7 +136,7 @@ app.post('/intersection', function (req, response) {
         size: '700x500',
         baselayer: baseLayer,
         layers: layers,
-        sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326) + "',4326)"
+        sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326 || primitive) + "',4326)"
     });
 
     options = {
