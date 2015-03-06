@@ -296,7 +296,7 @@ Viewer = function () {
         return [layer.toGeoJSON(), buffer];
     };
 
-    var showPrintBtn = function(){
+    var showPrintBtn = function () {
         if (searchFinish && staticMapFinish) {
             $('#result .btn').removeAttr("disabled");
             $("#print-spinner").hide();
@@ -328,7 +328,14 @@ Viewer = function () {
         $('#result .btn').attr('disabled', true);
         $.ajax({
             url: "/intersection",
-            data: "db=" + db + "&schema=" + schema + "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) + "&baselayer=" + baseLayer + "&buffer=" + buffer + "&socketid=" + socketId + "&text=" + encodeURIComponent(text),
+            data: "db=" + db +
+            "&schema=" + schema +
+            "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) +
+            "&baselayer=" + baseLayer +
+            "&layers=" + visibleLayers.join(",") +
+            "&buffer=" + buffer +
+            "&socketid=" + socketId +
+            "&text=" + encodeURIComponent(text),
             method: "POST",
             success: function (response) {
                 var hitsCount = 0, noHitsCount = 0, errorCount = 0;

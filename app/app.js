@@ -22,6 +22,7 @@ var schema;
 var text;
 var fileName;
 var baseLayer;
+var layers;
 var addr;
 
 // Set locale for date/time string
@@ -106,6 +107,7 @@ app.post('/intersection', function (req, response) {
     socketId = req.body.socketid;
     text = req.body.text;
     baseLayer = req.body.baselayer;
+    layers = req.body.layers;
     var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
     var url = gc2Config.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
@@ -133,13 +135,13 @@ app.post('/intersection', function (req, response) {
     var postData = querystring.stringify({
         size: '700x500',
         baselayer: baseLayer,
-        layers: 'false',
+        layers: layers,
         sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326) + "',4326)"
     });
 
     options = {
         method: 'POST',
-        host: '54.171.150.242',
+        host: gc2Config.staticMapHost,
         port: 80,
         path: '/api/v1/staticmap/png/odder',
         encoding: null
