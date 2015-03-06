@@ -1,9 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
 node_modules/
-public.old/
-app/tmp
-app/public/tmp
 app/config/pgConfig.js
 app/config/gc2Config.js
 app/public/js/bundle.js
