@@ -181,14 +181,14 @@ app.post('/intersection', function (req, response) {
         }
         request.get(url, function (err, res, body) {
             if (!err) {
-                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []};
+                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [];
                 // Count layers
                 for (var i = 0; i < metaData.data.length; i = i + 1) {
                     if (metaData.data[i].type !== "RASTER") {
                         metaDataFinal.data.push(metaData.data[i]);
+                        metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
                     }
                 }
-
                 (function iter() {
                     geomField = metaDataFinal.data[count].f_geometry_column;
                     table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
@@ -201,13 +201,39 @@ app.post('/intersection', function (req, response) {
                     }
                     startTime = new Date().getTime();
                     client.query(sql, bindings, function (err, result) {
-                        var time = new Date().getTime() - startTime;
+                        var time = new Date().getTime() - startTime, queryables, data = [], tmp = [];
                         count++;
-
                         if (!err) {
+                            // Get values if queryable
+                            queryables = JSON.parse(metaDataKeys[table.split(".")[1]].fieldconf);
+                            for (var i = 0; i < result.rows.length; i++) {
+                                for (var prop in queryables) {
+                                    if (queryables.hasOwnProperty(prop)) {
+                                        if (queryables[prop].querable) {
+                                            tmp.push({
+                                                name: prop,
+                                                alias: queryables[prop].alias || prop,
+                                                value: result.rows[i][prop],
+                                                sort_id: queryables[prop].sort_id,
+                                                key: false
+                                            })
+                                        }
+                                    }
+                                }
+                                tmp.push({
+                                    name: metaDataKeys[table.split(".")[1]].pkey,
+                                    alias: null,
+                                    value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
+                                    sort_id: null,
+                                    key: true
+                                });
+                                if (tmp.length > 0) data.push(tmp);
+                                tmp = [];
+                            }
                             hit = {
                                 table: table,
                                 hits: result.rows.length,
+                                data: data,
                                 num: count + "/" + metaDataFinal.data.length,
                                 time: time,
                                 id: socketId,

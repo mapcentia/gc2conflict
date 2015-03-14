@@ -105,7 +105,7 @@ Viewer = function () {
             }
         }
     };
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), drawing = false, searchFinish, staticMapFinish;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, staticMapFinish, zoomToFeature;
     hostname = window.gc2Config.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -198,6 +198,7 @@ Viewer = function () {
     cloud.map.addLayer(drawnItems);
     cloud.map.addLayer(infoItems);
     cloud.map.addLayer(bufferItems);
+    cloud.map.addLayer(dataItems);
 
     // Start of draw
     cloud.map.on('draw:created', function (e) {
@@ -207,6 +208,7 @@ Viewer = function () {
     cloud.map.on('draw:drawstart', function (e) {
         clearDrawItems();
         clearInfoItems();
+        clearDataItems();
         drawing = true;
     });
     cloud.map.on('draw:drawstop', function (e) {
@@ -278,6 +280,9 @@ Viewer = function () {
     var clearBufferItems = function () {
         bufferItems.clearLayers();
     };
+    var clearDataItems = function () {
+        dataItems.clearLayers();
+    };
 
     var geoJSONFromDraw = function () {
         var layer, buffer = 0;
@@ -317,11 +322,13 @@ Viewer = function () {
         var hitsTable = $("#hits-content tbody"),
             noHitsTable = $("#nohits-content tbody"),
             errorTable = $("#error-content tbody"),
+            hitsData = $("#hits-data"),
             row;
 
         hitsTable.empty();
         noHitsTable.empty();
         errorTable.empty();
+        hitsData.empty();
         clearBufferItems();
         $("#spinner span").show();
         $("#print-spinner").show();
@@ -347,13 +354,39 @@ Viewer = function () {
                 searchFinish = true;
                 showPrintBtn();
                 $.each(response.hits, function (i, v) {
-                        var table = i.split(".")[1],
+                        var table = i.split(".")[1], table1, table2, tr, td,
                             title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
                         if (v.error === null) {
                             row = "<tr><td>" + title + "</td><td>" + v.hits + "</td><td><input type='checkbox' data-gc2-id='" + i + "' " + ($.inArray(i, visibleLayers) > -1 ? "checked" : "") + "></td></tr>";
                             if (v.hits > 0) {
                                 hitsTable.append(row);
                                 hitsCount++;
+                                if (v.data.length > 0) {
+                                    table1 = $("<table class='table table-data'/>");
+                                    hitsData.append("<h3>" + title + " (" + v.data.length + ")</h3>");
+                                    $.each(v.data, function (u, row) {
+                                        var key = null, fid = null;
+                                        tr = $("<tr/>");
+                                        td = $("<td/>");
+                                        table2 = $("<table class='table'/>");
+                                        $.each(row, function (n, field) {
+                                            if (!field.key) {
+                                                table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>")
+                                            } else {
+                                                key = field.name;
+                                                fid = field.value;
+                                            }
+                                        });
+                                        td.append(table2);
+                                        tr.append("<td><div class='zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'></span>#" + (u + 1) + "</div></td>");
+                                        tr.append(td);
+                                        table1.append(tr);
+                                    });
+                                    hitsData.append(table1);
+
+                                } else {
+                                    hitsData.append("<p>" + title + ": Ingen data at vise</p>")
+                                }
                             } else {
                                 noHitsTable.append(row);
                                 noHitsCount++;
@@ -368,6 +401,10 @@ Viewer = function () {
                         $('#result-content a[href="#error-content"] span').html(" (" + errorCount + ")");
                     }
                 );
+                $(".zoom-to-feature").click(function (e) {
+                    zoomToFeature($(this).data('gc2-sf-table'), $(this).data('gc2-sf-key'), $(this).data('gc2-sf-fid'));
+                    e.stopPropagation();
+                });
                 $("#result-content input[type=checkbox]").change(function (e) {
                     switchLayer($(this).data('gc2-id'), $(this).context.checked);
                     e.stopPropagation();
@@ -387,7 +424,21 @@ Viewer = function () {
             }
         }); // Ajax call end
     };
-
+    zoomToFeature = function (table, key, fid) {
+        var store;
+        store = new geocloud.geoJsonStore({
+            host: hostname,
+            db: db,
+            sql: "SELECT * FROM " + table + " WHERE " + key + "=" + fid,
+            onLoad: function () {
+                clearDataItems();
+                clearInfoItems();
+                dataItems.addLayer(this.layer);
+                cloud.zoomToExtentOfgeoJsonStore(this);
+            }
+        });
+        store.load();
+    };
 // Draw end
     init = function () {
         var type1, type2, gids = [], searchString,
