@@ -3,6 +3,7 @@
 node_modules/
 app/config/pgConfig.js
 app/config/gc2Config.js
+app/config/appConfig.js
 app/public/js/bundle.js
 
 !app/tmp/.gitignore

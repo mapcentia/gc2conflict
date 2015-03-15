@@ -255,7 +255,8 @@ Viewer = function () {
                 shapeOptions: {
                     color: '#662d91'
                 }
-            }
+            },
+            marker: appConfig.enableMarkerDraw
         },
         edit: {
             featureGroup: drawnItems,
@@ -378,7 +379,7 @@ Viewer = function () {
                                             }
                                         });
                                         td.append(table2);
-                                        tr.append("<td><div class='zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'></span>#" + (u + 1) + "</div></td>");
+                                        tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search'></i></button></td>");
                                         tr.append(td);
                                         table1.append(tr);
                                     });

@@ -605,6 +605,11 @@ div.olControlZoom {
     background-color: #f9f9f9
 }
 
+.table-data > tbody > tr > td:first-child {
+    vertical-align: middle;
+    width: 50px;
+}
+
 .table-data > tbody > tr > td table > tbody > tr > td {
     border-top: 1px solid #ffffff;
     padding: 2px;
