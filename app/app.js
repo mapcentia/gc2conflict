@@ -220,14 +220,16 @@ app.post('/intersection', function (req, response) {
                                         }
                                     }
                                 }
-                                tmp.push({
-                                    name: metaDataKeys[table.split(".")[1]].pkey,
-                                    alias: null,
-                                    value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
-                                    sort_id: null,
-                                    key: true
-                                });
-                                if (tmp.length > 0) data.push(tmp);
+                                if (tmp.length > 0) {
+                                    tmp.push({
+                                        name: metaDataKeys[table.split(".")[1]].pkey,
+                                        alias: null,
+                                        value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
+                                        sort_id: null,
+                                        key: true
+                                    });
+                                    data.push(tmp);
+                                }
                                 tmp = [];
                             }
                             hit = {
