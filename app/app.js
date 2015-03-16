@@ -209,7 +209,7 @@ app.post('/intersection', function (req, response) {
                             for (var i = 0; i < result.rows.length; i++) {
                                 for (var prop in queryables) {
                                     if (queryables.hasOwnProperty(prop)) {
-                                        if (queryables[prop].querable) {
+                                        if (queryables[prop].conflict) {
                                             tmp.push({
                                                 name: prop,
                                                 alias: queryables[prop].alias || prop,
