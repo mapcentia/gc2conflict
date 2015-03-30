@@ -180,7 +180,7 @@ app.post('/intersection', function (req, response) {
         }
         request.get({
             host: gc2Config.hostFromNode,
-            path: "/api/v1/meta/" + db + "/" + schema,
+            uri: "/api/v1/meta/" + db + "/" + schema,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
