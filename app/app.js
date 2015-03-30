@@ -108,7 +108,7 @@ app.post('/intersection', function (req, response) {
     baseLayer = req.body.baselayer;
     layers = req.body.layers;
     var conString = "postgres://" + nodeConfig.pg.user + ":" + nodeConfig.pg.pw + "@" + nodeConfig.pg.host + "/" + db;
-    var url = nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
+    var url = "http://" + nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
     var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
