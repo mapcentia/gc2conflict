@@ -9,7 +9,7 @@ var jsts = require('jsts');
 var path = require('path');
 var bodyParser = require('body-parser');
 var moment = require('moment');
-var nodeConfig = require('./config/gc2Config');
+var nodeConfig = require('./config/nodeConfig');
 var http = require('http');
 var querystring = require('querystring');
 
