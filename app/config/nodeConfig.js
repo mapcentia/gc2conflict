@@ -1,4 +1,4 @@
-gc2Config = {
+nodeConfig = {
     host: "gc2",
     staticMapHost: "gc2",
     pg: {
