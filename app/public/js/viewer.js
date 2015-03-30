@@ -256,7 +256,7 @@ Viewer = function () {
                     color: '#662d91'
                 }
             },
-            marker: appConfig.enableMarkerDraw
+            marker: browserConfig.enableMarkerDraw
         },
         edit: {
             featureGroup: drawnItems,

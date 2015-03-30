@@ -9,8 +9,7 @@ var jsts = require('jsts');
 var path = require('path');
 var bodyParser = require('body-parser');
 var moment = require('moment');
-var pgConfig = require('./config/pgConfig');
-var gc2Config = require('./config/gc2Config');
+var nodeConfig = require('./config/gc2Config');
 var http = require('http');
 var querystring = require('querystring');
 
@@ -108,8 +107,8 @@ app.post('/intersection', function (req, response) {
     text = req.body.text;
     baseLayer = req.body.baselayer;
     layers = req.body.layers;
-    var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
-    var url = gc2Config.hostFromNode + "/api/v1/meta/" + db + "/" + schema;
+    var conString = "postgres://" + nodeConfig.pg.user + ":" + nodeConfig.pg.pw + "@" + nodeConfig.pg.host + "/" + db;
+    var url = nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
     var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
@@ -141,7 +140,7 @@ app.post('/intersection', function (req, response) {
 
     options = {
         method: 'POST',
-        host: gc2Config.staticMapHost,
+        host: nodeConfig.staticMapHost,
         port: 80,
         path: '/api/v1/staticmap/png/' + db,
         headers: {
