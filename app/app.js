@@ -44,7 +44,7 @@ app.get('/static', function (req, response) {
 });
 
 app.get('/pdf', function (req, response) {
-    var url = "http://localhost:8888/?url=127.0.0.1:8080/html?id=" + req.query.id;
+    var url = "http://localhost:8080/?url=127.0.0.1:80/html?id=" + req.query.id;
     http.get(url, function (res) {
         var chunks = [];
         res.on('data', function (chunk) {
@@ -289,7 +289,7 @@ app.post('/intersection', function (req, response) {
     });
 })
 ;
-var server = app.listen(8080, function () {
+var server = app.listen(80, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
