@@ -433,7 +433,7 @@ Viewer = function () {
             sql: "SELECT * FROM " + table + " WHERE " + key + "=" + fid,
             onLoad: function () {
                 clearDataItems();
-                clearInfoItems();
+                //clearInfoItems();
                 dataItems.addLayer(this.layer);
                 cloud.zoomToExtentOfgeoJsonStore(this);
             }
