@@ -109,7 +109,7 @@ app.post('/intersection', function (req, response) {
     baseLayer = req.body.baselayer;
     layers = req.body.layers;
     var conString = "postgres://" + pgConfig.user + ":" + pgConfig.pw + "@" + pgConfig.host + "/" + db;
-    var url = gc2Config.host + "/api/v1/meta/" + db + "/" + schema;
+    var url = gc2Config.hostFromNode + "/api/v1/meta/" + db + "/" + schema;
     var wkt = req.body.wkt;
     var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
@@ -179,7 +179,7 @@ app.post('/intersection', function (req, response) {
         if (err) {
             return console.error('error fetching client from pool', err);
         }
-        request.get(url, function (err, res, body) {
+            request.get(url, function (err, res, body) {
             if (!err) {
                 var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [];
                 // Count layers
@@ -282,7 +282,7 @@ app.post('/intersection', function (req, response) {
                 })();
                 //winston.log('info', resultsObj.message, resultsObj);
             } else {
-                console.log("Ups");
+                console.log(err);
                 //winston.log('error', err);
             }
         });
