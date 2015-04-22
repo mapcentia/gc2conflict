@@ -39,6 +39,22 @@ app.set('view engine', 'jade');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/geoserver', function (req, response) {
+    var url = "http://" + nodeConfig.print.host + ":" + nodeConfig.print.port + "/geoserver/pdf/info.json?var=printConfig";
+    http.get(url, function (res) {
+        var chunks = [];
+        res.on('data', function (chunk) {
+            chunks.push(chunk);
+        });
+        res.on("end", function () {
+            var jsfile = new Buffer.concat(chunks);
+           response.header('content-type', 'text/javascript');
+            response.send(jsfile);
+        });
+    }).on("error", function () {
+        callback(null);
+    });
+});
 
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
@@ -140,7 +156,7 @@ app.post('/print', function (req, response) {
                 io.emit(socketId, {static: true});
             });
         });
-    staticMapReq.write(postData, ['Transfer-Encoding', 'chunked']);
+    staticMapReq.write(postData);
     staticMapReq.end();
 });
 

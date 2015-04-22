@@ -1,11 +1,11 @@
 nodeConfig = {
     host: "gc2", // Without protocol
     print:{
-        host: "eu1.mapcentia.com", // Without protocol
-        port: "8888"
+        host: "geoserver", // Without protocol
+        port: "8080"
     },
     pg: {
-        host: "192.168.33.10",
+        host: "gc2",
         user: "postgres",
         pw: "1234"
     }
