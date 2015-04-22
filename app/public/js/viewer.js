@@ -658,11 +658,7 @@ Viewer = function () {
                 }
                 arr = array_unique(groups).reverse();
                 for (var u = 0; u < response.data.length; ++u) {
-                    if (response.data[u].baselayer) {
-                        isBaseLayer = true;
-                    } else {
-                        isBaseLayer = false;
-                    }
+                    isBaseLayer = response.data[u].baselayer ? true : false;
                     layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
                         host: hostname,
                         layers: [response.data[u].f_table_schema + "." + response.data[u].f_table_name],
@@ -672,7 +668,8 @@ Viewer = function () {
                         visibility: false,
                         wrapDateLine: false,
                         displayInLayerSwitcher: true,
-                        name: response.data[u].f_table_name
+                        name: response.data[u].f_table_name,
+                        type: isBaseLayer ? "tms" : "wms"
                     });
                 }
                 for (i = 0; i < arr.length; ++i) {
@@ -686,13 +683,20 @@ Viewer = function () {
                         for (u = 0; u < response.data.length; ++u) {
                             if (response.data[u].layergroup == arr[i]) {
                                 var text = (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title;
-                                $("#collapse" + base64name).append('<li class="list-group-item"><span class="checkbox"><label><input type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '</label></span></li>');
-                                l.push({
-                                    text: (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title,
-                                    id: response.data[u].f_table_schema + "." + response.data[u].f_table_name,
-                                    leaf: true,
-                                    checked: false
-                                });
+                                if (response.data[u].baselayer) {
+                                    $("#base-layer-list").append(
+                                        "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + response.data[u].f_table_schema + "." + response.data[u].f_table_name + "')\">" + text + "</a></li>"
+                                    );
+                                }
+                                else {
+                                    $("#collapse" + base64name).append('<li class="list-group-item"><span class="checkbox"><label><input type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '</label></span></li>');
+                                    l.push({
+                                        text: (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title,
+                                        id: response.data[u].f_table_schema + "." + response.data[u].f_table_name,
+                                        leaf: true,
+                                        checked: false
+                                    });
+                                }
                             }
                         }
                     }
