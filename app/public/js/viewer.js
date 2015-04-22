@@ -595,7 +595,7 @@ Viewer = function () {
             }
         });
         // Set the default buffer
-        $("#buffer").val("10");
+        $("#buffer").val(browserConfig.defaultBuffer);
         if (typeof window.setBaseLayers !== 'object') {
             window.setBaseLayers = [
                 {"id": "mapQuestOSM", "name": "MapQuset OSM"},
