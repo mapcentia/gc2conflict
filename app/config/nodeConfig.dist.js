@@ -1,5 +1,5 @@
 nodeConfig = {
-    host: "192.168.33.10", // Without protocol
+    host: "gc2", // Without protocol
     print:{
         host: "eu1.mapcentia.com", // Without protocol
         port: "8888"
