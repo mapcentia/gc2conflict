@@ -10,7 +10,7 @@
 /*global schema:false */
 /*global document:false */
 /*global window:false */
-var Viewer;
+var Viewer, print;
 Viewer = function () {
     "use strict";
     L.drawLocal = {
@@ -105,7 +105,8 @@ Viewer = function () {
             }
         }
     };
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, staticMapFinish, zoomToFeature;
+
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId;
     hostname = window.browserConfig.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -199,6 +200,25 @@ Viewer = function () {
     cloud.map.addLayer(infoItems);
     cloud.map.addLayer(bufferItems);
     cloud.map.addLayer(dataItems);
+
+    print = L.print.provider({
+        capabilities: window.printConfig,
+        method: 'POST',
+        dpi: 127,
+        outputFormat: 'pdf',
+        legends: true,
+        proxy: '/cgi/proxy.cgi?url=',
+        customParams: {
+            "mapTitle": "",
+            "mapComment": "",
+            "mapFooter": "",
+            mapAttribution: ""
+        }
+    });
+    cloud.map.addControl(L.control.print({
+        provider: print,
+        position: 'topright'
+    }));
 
     // Start of draw
     cloud.map.on('draw:created', function (e) {
@@ -303,10 +323,10 @@ Viewer = function () {
     };
 
     var showPrintBtn = function () {
-        if (searchFinish && staticMapFinish) {
+        if (searchFinish) {
             $('#result .btn').removeAttr("disabled");
             $("#print-spinner").hide();
-            searchFinish = staticMapFinish = false;
+            searchFinish = false;
         }
     };
     makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
@@ -352,6 +372,7 @@ Viewer = function () {
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
                 $('#result .btn').attr("href", "/html?id=" + response.file)
+                fileId = response.file;
                 searchFinish = true;
                 showPrintBtn();
                 $.each(response.hits, function (i, v) {
@@ -386,7 +407,7 @@ Viewer = function () {
                                     hitsData.append(table1);
 
                                 } else {
-                                    hitsData.append("<p>" + title + ": Ingen data at vise</p>")
+                                    //Pass
                                 }
                             } else {
                                 noHitsTable.append(row);
@@ -569,7 +590,7 @@ Viewer = function () {
                 }
             }
             if (typeof data.static !== "undefined") {
-                staticMapFinish = true;
+                searchFinish = true;
                 showPrintBtn();
             }
         });
@@ -598,6 +619,19 @@ Viewer = function () {
         });
         $("#clear-btn").on("click", function () {
             clearDrawItems();
+        });
+        $('#result .btn').on("click", function () {
+            $(this).attr('disabled', true);
+            $("#print-spinner").show();
+            $.ajax({
+                url: "/print",
+                data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
+                method: "POST",
+                success: function (response) {
+                    showPrintBtn();
+                    window.open("/html?id=" + fileId);
+                }
+            }); // Ajax call end
         });
 
         $("#modal-info").on('hidden.bs.modal', function (e) {
@@ -677,8 +711,9 @@ Viewer = function () {
             jsonp: 'jsonp_callback',
             success: function (response) {
                 if (typeof response.data.extents === "object") {
-                    if (typeof response.data.extents[schema] === "object") {
-                        extent = response.data.extents[schema];
+                    var firstSchema = schema.split(",").length > 1 ? schema.split(",")[0] : schema
+                    if (typeof response.data.extents[firstSchema] === "object") {
+                        extent = response.data.extents[firstSchema];
                     }
                 }
                 settingsReady = true;

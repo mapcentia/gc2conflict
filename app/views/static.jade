@@ -15,7 +15,19 @@ html
                         table(class="table")
                             each val, key in json.hits
                                 tr
-                                    td #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name} (#{val.hits})
+                                    td
+                                        p #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name} (#{val.hits})
+                                            if val.data.length > 0
+                                                table(class="table table-bordered")
+                                                    thead
+                                                        each data, dkey in val.data[0]
+                                                            if data.key == false
+                                                                th #{data.alias}
+                                                        each data, dkey in val.data
+                                                            tr
+                                                                each row, rkey in data
+                                                                    if row.key == false
+                                                                         td #{row.value}
                         h3 Ingen hits
                         table(class="table")
                             each val, key in json.noHits

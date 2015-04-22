@@ -12,6 +12,7 @@ var moment = require('moment');
 var nodeConfig = require('./config/nodeConfig');
 var http = require('http');
 var querystring = require('querystring');
+var exec = require('child_process').exec;
 
 var app = express();
 var buffer = 0;
@@ -29,13 +30,15 @@ moment.locale("da");
 
 //app.use(cors());
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
+app.use(bodyParser.json({extended: true, limit: '50mb'}));
 
 app.set('views', __dirname + '/views');
 
 app.set('view engine', 'jade');
 
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
@@ -90,6 +93,56 @@ app.get('/html', function (req, res) {
         res.render('static', {layout: 'layout', json: json});
     });
 });
+app.post('/print', function (req, response) {
+    var postData = req.body.json, id = req.body.id,
+        options = {
+            method: 'POST',
+            host: nodeConfig.print.host,
+            port: nodeConfig.print.port,
+            path: '/geoserver/pdf/create.json',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': postData.length
+            }
+        },
+        staticMapReq = http.request(options, function (res) {
+            var str = '';
+            res.setEncoding('binary');
+            res.on('data', function (chunk) {
+                str += chunk
+            });
+            res.on('end', function () {
+                http.get(JSON.parse(str).getURL, function (res) {
+                    var chunks = [];
+                    res.on('data', function (chunk) {
+                        chunks.push(chunk);
+                    });
+                    res.on("end", function () {
+                        var jsfile = new Buffer.concat(chunks);
+                        fs.writeFile(__dirname + "/public/tmp/" + id + ".pdf", jsfile, 'binary', function (err) {
+                            if (err) throw err;
+                            console.log('PDF saved.');
+                            exec("gs -dQUIET -dPARANOIDSAFER -dBATCH -dNOPAUSE -dNOPROMPT -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r72 -dFirstPage=1 -dLastPage=1 -sOutputFile=" + __dirname + "/public/tmp/" + id + ".png " + __dirname + "/public/tmp/" + id + ".pdf", function (error, stdout, stderr) {
+                                if (error !== null) {
+                                    console.log(error);
+                                }
+                                response.send({success: true});
+                            });
+                        });
+                    });
+                }).on("error", function () {
+                    callback(null);
+                });
+                io.emit(socketId, {static: true});
+            });
+            res.on('error', function () {
+                console.log("Static map error");
+                io.emit(socketId, {static: true});
+            });
+        });
+    staticMapReq.write(postData, ['Transfer-Encoding', 'chunked']);
+    staticMapReq.end();
+});
 
 app.post('/intersection', function (req, response) {
     if (!req.body.wkt) {
@@ -130,55 +183,13 @@ app.post('/intersection', function (req, response) {
         return v.toString(16);
     });
 
-    // Start static map
-    var postData = querystring.stringify({
-        size: '700x500',
-        baselayer: baseLayer,
-        layers: layers,
-        sql: "SELECT ST_GeomFromText('" + terraformer.convert(buffer4326 || primitive) + "',4326)"
-    });
-
-    options = {
-        method: 'POST',
-        host: nodeConfig.staticMapHost,
-        port: 80,
-        path: '/api/v1/staticmap/png/' + db,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': postData.length
-        }
-    };
-
-    var staticMapReq = http.request(options, function (res) {
-        var imagedata = '';
-        res.setEncoding('binary');
-
-        res.on('data', function (chunk) {
-            imagedata += chunk
-        });
-
-        res.on('end', function () {
-            fs.writeFile(__dirname + "/public/tmp/" + fileName + ".png", imagedata, 'binary', function (err) {
-                if (err) throw err;
-                console.log('Image saved.')
-            });
-            io.emit(socketId, {static: true});
-        });
-
-        res.on('error', function () {
-            console.log("Static map error");
-            io.emit(socketId, {static: true});
-        });
-
-    });
-    staticMapReq.write(postData);
-    staticMapReq.end();
+    io.emit(socketId, {static: true});
 
     pg.connect(conString, function (err, client, done) {
         if (err) {
             return console.error('error fetching client from pool', err);
         }
-            request.get(url, function (err, res, body) {
+        request.get(url, function (err, res, body) {
             if (!err) {
                 var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [];
                 // Count layers
@@ -287,8 +298,8 @@ app.post('/intersection', function (req, response) {
         });
     });
 })
-;
-var server = app.listen(80, function () {
+
+var server = app.listen(8080, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
