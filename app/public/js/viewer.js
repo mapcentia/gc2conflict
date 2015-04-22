@@ -206,7 +206,7 @@ Viewer = function () {
         method: 'POST',
         dpi: 127,
         outputFormat: 'pdf',
-        legends: true,
+        legends: false,
         proxy: '/cgi/proxy.cgi?url=',
         customParams: {
             "mapTitle": "",
