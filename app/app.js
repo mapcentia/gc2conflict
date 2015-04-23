@@ -27,18 +27,13 @@ var addr;
 
 // Set locale for date/time string
 moment.locale("da");
-
 //app.use(cors());
-
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
 app.use(bodyParser.json({extended: true, limit: '50mb'}));
-
 app.set('views', __dirname + '/views');
-
 app.set('view engine', 'jade');
 
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/geoserver', function (req, response) {
     var url = "http://" + nodeConfig.print.host + ":" + nodeConfig.print.port + "/geoserver/pdf/info.json?var=printConfig";
     http.get(url, function (res) {
@@ -55,12 +50,10 @@ app.get('/geoserver', function (req, response) {
         callback(null);
     });
 });
-
 app.get('/static', function (req, response) {
     response.setHeader('Content-Type', 'application/json');
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
-
 app.get('/pdf', function (req, response) {
     var url = "http://localhost:8080/?url=127.0.0.1:80/html?id=" + req.query.id;
     http.get(url, function (res) {
@@ -77,7 +70,6 @@ app.get('/pdf', function (req, response) {
         callback(null);
     });
 });
-
 app.get('/html', function (req, res) {
     fs.readFile(__dirname + '/tmp/' + req.query.id, 'utf8', function (err, data) {
         if (err) {
@@ -159,7 +151,6 @@ app.post('/print', function (req, response) {
     staticMapReq.write(postData);
     staticMapReq.end();
 });
-
 app.post('/intersection', function (req, response) {
     if (!req.body.wkt) {
         response.status(400);
@@ -198,9 +189,6 @@ app.post('/intersection', function (req, response) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
-
-    io.emit(socketId, {static: true});
-
     pg.connect(conString, function (err, client, done) {
         if (err) {
             return console.error('error fetching client from pool', err);
@@ -314,7 +302,7 @@ app.post('/intersection', function (req, response) {
             }
         });
     });
-})
+});
 
 var server = app.listen(80, function () {
     var host = server.address().address;

@@ -589,10 +589,6 @@ Viewer = function () {
                     $("#console").append(data.table + " : " + data.error + "\n");
                 }
             }
-            if (typeof data.static !== "undefined") {
-                searchFinish = true;
-                showPrintBtn();
-            }
         });
         // Set the default buffer
         $("#buffer").val(browserConfig.defaultBuffer);
@@ -621,10 +617,11 @@ Viewer = function () {
             clearDrawItems();
         });
         $('#result .btn').on("click", function () {
-            $(this).attr('disabled', true);
-            $("#print-spinner").show();
+            //$(this).attr('disabled', true);
+            //$("#print-spinner").show();
+            console.log(JSON.parse(print.getJson({layout: "A4 Landscape"})));
             $.ajax({
-                url: "/print",
+                url: "/prsint",
                 data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
                 method: "POST",
                 success: function (response) {
