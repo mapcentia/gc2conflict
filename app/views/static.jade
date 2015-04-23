@@ -10,7 +10,7 @@ html
                         a(href="pdf?id=" + json.id) Hent som PDF
                         h2 #{json.text}
                         p #{json.dateTime}
-                        img(src= "/tmp/" + json.id + ".png")
+                        img(size="800" src= "/tmp/" + json.id + ".png")
                         h3 Hits
                         table(class="table")
                             each val, key in json.hits

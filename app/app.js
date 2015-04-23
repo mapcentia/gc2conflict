@@ -130,7 +130,7 @@ app.post('/print', function (req, response) {
                         fs.writeFile(__dirname + "/public/tmp/" + id + ".pdf", jsfile, 'binary', function (err) {
                             if (err) throw err;
                             console.log('PDF saved.');
-                            exec("gs -dQUIET -dPARANOIDSAFER -dBATCH -dNOPAUSE -dNOPROMPT -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r72 -dFirstPage=1 -dLastPage=1 -sOutputFile=" + __dirname + "/public/tmp/" + id + ".png " + __dirname + "/public/tmp/" + id + ".pdf", function (error, stdout, stderr) {
+                            exec("gs -dQUIET -dPARANOIDSAFER -dBATCH -dNOPAUSE -dNOPROMPT -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r190 -dFirstPage=1 -dLastPage=1 -sOutputFile=" + __dirname + "/public/tmp/" + id + ".png " + __dirname + "/public/tmp/" + id + ".pdf", function (error, stdout, stderr) {
                                 if (error !== null) {
                                     console.log(error);
                                 }
