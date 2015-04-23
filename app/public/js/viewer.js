@@ -619,7 +619,6 @@ Viewer = function () {
         $('#result .btn').on("click", function () {
             $(this).attr('disabled', true);
             $("#print-spinner").show();
-            console.log(JSON.parse(print.getJson({layout: "A4 Landscape"})));
             $.ajax({
                 url: "/print",
                 data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
