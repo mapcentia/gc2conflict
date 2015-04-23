@@ -621,7 +621,12 @@ Viewer = function () {
             $("#print-spinner").show();
             $.ajax({
                 url: "/print",
-                data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({
+                    json: print.getJson({layout: "A4 Landscape"}),
+                    id: fileId
+                }),
                 method: "POST",
                 success: function (response) {
                     searchFinish = true;
@@ -638,7 +643,6 @@ Viewer = function () {
         });
         $.ajax({
             url: hostname.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
-            dataType: 'jsonp',
             scriptCharset: "utf-8",
             jsonp: 'jsonp_callback',
             success: function (response) {
