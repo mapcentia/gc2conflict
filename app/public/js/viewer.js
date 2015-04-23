@@ -621,7 +621,7 @@ Viewer = function () {
             //$("#print-spinner").show();
             console.log(JSON.parse(print.getJson({layout: "A4 Landscape"})));
             $.ajax({
-                url: "/prsint",
+                url: "/print",
                 data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
                 method: "POST",
                 success: function (response) {
