@@ -617,8 +617,8 @@ Viewer = function () {
             clearDrawItems();
         });
         $('#result .btn').on("click", function () {
-            //$(this).attr('disabled', true);
-            //$("#print-spinner").show();
+            $(this).attr('disabled', true);
+            $("#print-spinner").show();
             console.log(JSON.parse(print.getJson({layout: "A4 Landscape"})));
             $.ajax({
                 url: "/print",
