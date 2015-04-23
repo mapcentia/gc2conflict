@@ -670,7 +670,7 @@ Viewer = function () {
                         wrapDateLine: false,
                         displayInLayerSwitcher: true,
                         name: response.data[u].f_table_name,
-                        type: isBaseLayer ? "tms" : "wms"
+                        type: "tms"
                     });
                 }
                 for (i = 0; i < arr.length; ++i) {
