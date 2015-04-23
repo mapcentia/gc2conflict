@@ -102,7 +102,7 @@ app.get('/html', function (req, res) {
     });
 });
 app.post('/print', function (req, response) {
-    var postData = req.body.json, id = req.body.id,
+    var postData = JSON.stringify(req.body.json), id = req.body.id,
         options = {
             method: 'POST',
             host: nodeConfig.print.host,
