@@ -624,6 +624,7 @@ Viewer = function () {
                 data: "json=" + print.getJson({layout: "A4 Landscape"}) + "&id=" + fileId,
                 method: "POST",
                 success: function (response) {
+                    searchFinish = true;
                     showPrintBtn();
                     window.open("/html?id=" + fileId);
                 }
