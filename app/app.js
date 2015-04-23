@@ -199,7 +199,8 @@ app.post('/intersection', function (req, response) {
                 // Count layers
                 for (var i = 0; i < metaData.data.length; i = i + 1) {
                     if (metaData.data[i].type !== "RASTER" &&
-                        metaData.data[i].baselayer !== true) {
+                        metaData.data[i].baselayer !== true &&
+                        metaData.data[i].skipconflict !== true) {
                         metaDataFinal.data.push(metaData.data[i]);
                         metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
                     }
