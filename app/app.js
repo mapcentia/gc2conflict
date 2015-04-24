@@ -16,7 +16,6 @@ var exec = require('child_process').exec;
 
 var app = express();
 var buffer = 0;
-var socketId;
 var db;
 var schema;
 var text;
@@ -102,7 +101,7 @@ app.get('/html', function (req, res) {
     });
 });
 app.post('/print', function (req, response) {
-    var postData = JSON.stringify(req.body.json), id = req.body.id,
+    var postData = JSON.stringify(req.body.json), id = req.body.id, socketId = req.body.socketId,
         options = {
             method: 'POST',
             host: nodeConfig.print.host,
@@ -152,6 +151,7 @@ app.post('/print', function (req, response) {
     staticMapReq.end();
 });
 app.post('/intersection', function (req, response) {
+    var socketId;
     if (!req.body.wkt) {
         response.status(400);
         response.send({
@@ -305,7 +305,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8181, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);

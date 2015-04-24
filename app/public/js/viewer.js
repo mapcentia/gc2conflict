@@ -628,8 +628,9 @@ Viewer = function () {
                 dataType: "json",
                 data: JSON.stringify({
                     json: print.getJson({layout: "A4 Landscape"}),
-                    id: fileId
-                }),
+                    id: fileId,
+                    socketId: socketId
+        }),
                 method: "POST",
                 success: function (response) {
                     searchFinish = true;
