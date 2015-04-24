@@ -1,6 +1,5 @@
 var request = require("request");
 var express = require('express');
-var cors = require('cors')
 var pg = require('pg');
 var fs = require('fs');
 var reproject = require('reproject');
@@ -15,10 +14,8 @@ var querystring = require('querystring');
 var exec = require('child_process').exec;
 
 var app = express();
-
 // Set locale for date/time string
 moment.locale("da");
-//app.use(cors());
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
 app.use(bodyParser.json({extended: true, limit: '50mb'}));
 app.set('views', __dirname + '/views');
