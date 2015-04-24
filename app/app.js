@@ -15,14 +15,6 @@ var querystring = require('querystring');
 var exec = require('child_process').exec;
 
 var app = express();
-var buffer = 0;
-var db;
-var schema;
-var text;
-var fileName;
-var baseLayer;
-var layers;
-var addr;
 
 // Set locale for date/time string
 moment.locale("da");
@@ -70,6 +62,7 @@ app.get('/pdf', function (req, response) {
     });
 });
 app.get('/html', function (req, res) {
+    var addr;
     fs.readFile(__dirname + '/tmp/' + req.query.id, 'utf8', function (err, data) {
         if (err) {
             return console.log(err);
@@ -151,7 +144,7 @@ app.post('/print', function (req, response) {
     staticMapReq.end();
 });
 app.post('/intersection', function (req, response) {
-    var socketId;
+    var socketId, fileName, baseLayer, layers, buffer, db, schema, text;
     if (!req.body.wkt) {
         response.status(400);
         response.send({
