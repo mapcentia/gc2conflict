@@ -379,6 +379,9 @@ Viewer = function () {
                         var table = i.split(".")[1], table1, table2, tr, td,
                             title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
                         if (v.error === null) {
+                            if (metaDataKeys[table].meta_url) {
+                                title = "<a target='_blank' href='" + metaDataKeys[table].meta_url + "'>" + title + "</a>";
+                            }
                             row = "<tr><td>" + title + "</td><td>" + v.hits + "</td><td><input type='checkbox' data-gc2-id='" + i + "' " + ($.inArray(i, visibleLayers) > -1 ? "checked" : "") + "></td></tr>";
                             if (v.hits > 0) {
                                 hitsTable.append(row);
