@@ -20,8 +20,8 @@ app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
 app.use(bodyParser.json({extended: true, limit: '50mb'}));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
-
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/geoserver', function (req, response) {
     var url = "http://" + nodeConfig.print.host + ":" + nodeConfig.print.port + "/geoserver/pdf/info.json?var=printConfig";
     http.get(url, function (res) {
