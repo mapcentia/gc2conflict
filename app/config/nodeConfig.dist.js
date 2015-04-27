@@ -1,4 +1,4 @@
-// gc2 and geoserver is alias of the linked Docker containers
+// gc2 and geoserver is aliases of the linked Docker containers
 nodeConfig = {
     host: "gc2", // Don't write protocol
     print:{
