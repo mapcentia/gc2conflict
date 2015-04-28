@@ -106,7 +106,7 @@ Viewer = function () {
         }
     };
 
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId, geomStr;
     hostname = window.browserConfig.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -170,10 +170,6 @@ Viewer = function () {
         });
     };
 
-    anchor = function () {
-        var p = geocloud.transformPoint(cloud.getCenter().x, cloud.getCenter().y, "EPSG:900913", "EPSG:4326");
-        return "#" + cloud.getBaseLayerName() + "/" + Math.round(cloud.getZoom()).toString() + "/" + (Math.round(p.x * 10000) / 10000).toString() + "/" + (Math.round(p.y * 10000) / 10000).toString() + "/" + ((cloud.getNamesOfVisibleLayers()) ? cloud.getNamesOfVisibleLayers().split(",").reverse().join(",") : "");
-    };
     autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-input'));
     google.maps.event.addListener(autocomplete, 'place_changed', function () {
         var place = autocomplete.getPlace(),
@@ -323,11 +319,15 @@ Viewer = function () {
     };
 
     var showPrintBtn = function () {
-        if (searchFinish) {
-            $('#result .btn').removeAttr("disabled");
-            $("#print-spinner").hide();
-            searchFinish = false;
-        }
+        $('#print-btn').removeAttr("disabled");
+        $("#print-btn .print-spinner").hide();
+        searchFinish = false;
+
+    };
+    var showGeomaticBtn = function () {
+        $('#geomatic-btn').removeAttr("disabled");
+        $("#geomatic-btn .print-spinner").hide();
+        searchFinish = false;
     };
     makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
         var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers, baseLayer;
@@ -352,7 +352,7 @@ Viewer = function () {
         hitsData.empty();
         clearBufferItems();
         $("#spinner span").show();
-        $("#print-spinner").show();
+        $(".print-spinner").show();
         $('#result .btn').attr('disabled', true);
         $.ajax({
             url: "/intersection",
@@ -371,10 +371,11 @@ Viewer = function () {
                 $("#result-origin").html(response.text);
                 $('#main-tabs a[href="#result-content"]').tab('show');
                 $('#result-content a[href="#hits-content"]').tab('show');
-                $('#result .btn').attr("href", "/html?id=" + response.file)
+                $('#result .btn:first-child').attr("href", "/html?id=" + response.file)
                 fileId = response.file;
                 searchFinish = true;
                 showPrintBtn();
+                showGeomaticBtn();
                 $.each(response.hits, function (i, v) {
                         var table = i.split(".")[1], table1, table2, tr, td,
                             title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
@@ -446,6 +447,7 @@ Viewer = function () {
                 if (zoomToBuffer) {
                     cloud.map.fitBounds(bufferGeom.getBounds());
                 }
+                geomStr = response.geom;
             }
         }); // Ajax call end
     };
@@ -619,26 +621,49 @@ Viewer = function () {
         $("#clear-btn").on("click", function () {
             clearDrawItems();
         });
-        $('#result .btn').on("click", function () {
+        $('#print-btn').on("click", function () {
             $(this).attr('disabled', true);
-            $("#print-spinner").show();
+            $("#print-btn .print-spinner").show();
             $.ajax({
                 url: "/print",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 data: JSON.stringify({
                     json: print.getJson({layout: "A4 Landscape"}),
-                    id: fileId,
-                    socketId: socketId
-        }),
+                    id: fileId
+                }),
                 method: "POST",
-                success: function (response) {
+                success: function () {
                     searchFinish = true;
                     showPrintBtn();
                     window.open("/html?id=" + fileId);
                 }
             }); // Ajax call end
         });
+
+        $("#geomatic-btn").on("click", function () {
+            $(this).attr('disabled', true);
+            $("#geomatic-btn .print-spinner").show();
+            $.ajax({
+                url: "/geomatic",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({
+                    json: geomStr,
+                    id: fileId
+                }),
+                method: "POST",
+                success: function () {
+                    searchFinish = true;
+                    showGeomaticBtn();
+                    window.open("/tmp/geomatic_" + fileId + ".pdf");
+                }
+            }); // Ajax call end
+        });
+
+        if (typeof window.browserConfig.enableGeomatic === "undefined" || window.browserConfig.enableGeomatic === false) {
+            $("#geomatic-btn").hide();
+        }
 
         $("#modal-info").on('hidden.bs.modal', function (e) {
             $.each(qstore, function (i, v) {

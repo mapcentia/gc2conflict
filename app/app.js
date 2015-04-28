@@ -31,7 +31,7 @@ app.get('/geoserver', function (req, response) {
         });
         res.on("end", function () {
             var jsfile = new Buffer.concat(chunks);
-           response.header('content-type', 'text/javascript');
+            response.header('content-type', 'text/javascript');
             response.send(jsfile);
         });
     }).on("error", function () {
@@ -57,6 +57,36 @@ app.get('/pdf', function (req, response) {
     }).on("error", function () {
         callback(null);
     });
+});
+app.post('/geomatic', function (req, response) {
+    console.log(terraformer.convert(req.body.json));
+    var postData = "wkt=" + terraformer.convert(req.body.json) + "&Username=" + nodeConfig.geomatic.user + "&Password=" + nodeConfig.geomatic.pw, id = req.body.id,
+        options = {
+            method: 'POST',
+            host: "apps.conzoom.eu",
+            port: "80",
+            path: '/analysis/86F8A64F-1E22-4970-AD58-C808763CF61F/restreport/Pdf',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded ',
+                'Content-Length': postData.length
+            }
+        },
+        reqGeomatic = http.request(options, function (res) {
+            var chunks = [];
+            res.on('data', function (chunk) {
+                chunks.push(chunk);
+            });
+            res.on('end', function () {
+                var jsfile = new Buffer.concat(chunks);
+                fs.writeFile(__dirname + "/public/tmp/geomatic_" + id + ".pdf", jsfile, 'binary', function (err) {
+                    if (err) throw err;
+                    console.log('Geomatic PDF saved.');
+                });
+                response.send({success: true});
+            });
+        });
+    reqGeomatic.write(postData);
+    reqGeomatic.end();
 });
 app.get('/html', function (req, res) {
     var addr;
@@ -91,7 +121,7 @@ app.get('/html', function (req, res) {
     });
 });
 app.post('/print', function (req, response) {
-    var postData = JSON.stringify(req.body.json), id = req.body.id, socketId = req.body.socketId,
+    var postData = JSON.stringify(req.body.json), id = req.body.id,
         options = {
             method: 'POST',
             host: nodeConfig.print.host,
@@ -130,11 +160,9 @@ app.post('/print', function (req, response) {
                 }).on("error", function () {
                     callback(null);
                 });
-                io.emit(socketId, {static: true});
             });
             res.on('error', function () {
                 console.log("Static map error");
-                io.emit(socketId, {static: true});
             });
         });
     staticMapReq.write(postData);
@@ -295,7 +323,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8181, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);

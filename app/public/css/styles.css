@@ -480,7 +480,7 @@ div.olControlZoom {
     top: -1px;
 }
 
-#print-spinner {
+.print-spinner {
     position: absolute;
     width: 15px;
     height: 15px;
