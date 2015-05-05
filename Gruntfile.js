@@ -34,7 +34,7 @@ module.exports = function (grunt) {
         browserify: {
             publish: {
                 files: {
-                    'app/public/js/bundle.js': ['app/config/browser.js']
+                    'app/public/js/bundle.js': ['app/config/browserify.js']
                 }
             }
         },

@@ -17,56 +17,56 @@ Viewer = function () {
         draw: {
             toolbar: {
                 actions: {
-                    title: 'Afbryd tegning',
-                    text: 'Afbryd'
+                    title: __('Cancel drawing'),
+                    text: __('Cancel')
                 },
                 undo: {
-                    title: 'Slet sidste punkt tegnet.',
-                    text: 'Slet sidste punkt'
+                    title: __('Delete last point drawn'),
+                    text: __('Delete last point')
                 },
                 buttons: {
-                    polyline: 'Søg med en linje',
-                    polygon: 'Søg med en flade',
-                    rectangle: 'Søg med rektangel',
-                    circle: 'Søg med en cirkel',
-                    marker: 'Søg med et punkt'
+                    polyline: __('Search with a line'),
+                    polygon: __('Search with an area'),
+                    rectangle: __('Search with a rectangle'),
+                    circle: __('Search with a circle'),
+                    marker: __('Search with a point')
                 }
             },
             handlers: {
                 circle: {
                     tooltip: {
-                        start: 'Klik og træk for at slå cirkel.'
+                        start: __('Click and drag to draw circle.')
                     },
-                    radius: 'Radius'
+                    radius: __('Radius')
                 },
                 marker: {
                     tooltip: {
-                        start: 'Klik på kort at sætte punkt.'
+                        start: __('Click map to place marker.')
                     }
                 },
                 polygon: {
                     tooltip: {
-                        start: 'Klik for at starte flade.',
-                        cont: 'Klik for at fortsætte tegning.',
-                        end: 'Klik på første punkt for at afslutte.'
+                        start: __('Click to start drawing shape.'),
+                        cont: __('Click to continue drawing shape.'),
+                        end: __('Click first point to close this shape.')
                     }
                 },
                 polyline: {
-                    error: '<strong>Fejl:</strong> fladens kanter må ikke krydse!',
+                    error: __('<strong>Error:</strong> shape edges cannot cross!'),
                     tooltip: {
-                        start: 'Klik for at starte linje.',
-                        cont: 'Klik for at fortsætte tegning.',
-                        end: 'Klik på sidste punkt for at afslutte.'
+                        start: __('Click to start drawing line.'),
+                        cont: __('Click to continue drawing line.'),
+                        end: __('Click last point to finish line.')
                     }
                 },
                 rectangle: {
                     tooltip: {
-                        start: 'Klik og  træk for et tegne rektangel.'
+                        start: __('Click and drag to draw rectangle.')
                     }
                 },
                 simpleshape: {
                     tooltip: {
-                        end: 'Slip mus for at afslutte.'
+                        end: __('Release mouse to finish drawing.')
                     }
                 }
             }
@@ -75,38 +75,38 @@ Viewer = function () {
             toolbar: {
                 actions: {
                     save: {
-                        title: 'Gem ændringer.',
-                        text: 'Gem'
+                        title: __('Save changes.'),
+                        text: __('Save')
                     },
                     cancel: {
-                        title: 'Afbryd tegning, smid alle ændringer ud.',
-                        text: 'Afbryd'
+                        title: __('Cancel editing, discards all changes.'),
+                        text: __('Cancel')
                     }
                 },
                 buttons: {
-                    edit: 'Ændre tegning.',
-                    editDisabled: 'Ingen tegning at ændre.',
-                    remove: 'Slet tegning.',
-                    removeDisabled: 'Ingen tegning at slette.'
+                    edit: __("Edit drawings."),
+                    editDisabled: __('No drawings to edit.'),
+                    remove: __('Delete drawings.'),
+                    removeDisabled: __('No drawings to delete.')
                 }
             },
             handlers: {
                 edit: {
                     tooltip: {
-                        text: 'Træk håndtag, eller markør for at ændre tegning.',
-                        subtext: 'Klik afbryd for at omgøre ændring.'
+                        text: __('Drag handles, or marker to edit drawing.'),
+                        subtext: __('Click cancel to undo changes.')
                     }
                 },
                 remove: {
                     tooltip: {
-                        text: 'Klik tegning for at slette.'
+                        text: __('Click on a feature to remove')
                     }
                 }
             }
         }
     };
 
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, urlVars, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId, geomStr;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId, geomStr, urlVars;
     hostname = window.browserConfig.host;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -248,7 +248,6 @@ Viewer = function () {
         position: 'topright',
         draw: {
             polygon: {
-                title: 'Søg med en flade',
                 allowIntersection: false,
                 drawError: {
                     color: '#b00b00',
@@ -261,13 +260,11 @@ Viewer = function () {
             },
             polyline: false,
             circle: {
-                title: 'Søg med en cirkel',
                 shapeOptions: {
                     color: '#662d91'
                 }
             },
             rectangle: {
-                title: 'Søg med en rektangel',
                 shapeOptions: {
                     color: '#662d91'
                 }
@@ -467,122 +464,8 @@ Viewer = function () {
         store.load();
     };
 // Draw end
-    init = function () {
-        var type1, type2, gids = [], searchString,
-            komKode = urlVars.komkode,
-            placeStore = new geocloud.geoJsonStore({
-                host: "http://eu1.mapcentia.com",
-                db: "dk",
-                sql: null,
-                onLoad: function () {
-                    //cloud.zoomToExtentOfgeoJsonStore(placeStore);
-                    clearDrawItems()
-                    clearInfoItems();
-                    drawnItems.addLayer(placeStore.layer);
-                    makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
-                }
-            });
-        $('#places .typeahead').typeahead({
-            highlight: false
-        }, {
-            name: 'adresse',
-            displayKey: 'value',
-            templates: {
-                header: '<h2 class="typeahead-heading">Adresser</h2>'
-            },
-            source: function (query, cb) {
-                if (query.match(/\d+/g) === null && query.match(/\s+/g) === null) {
-                    type1 = "vejnavn,bynavn";
-                }
-                if (query.match(/\d+/g) === null && query.match(/\s+/g) !== null) {
-                    type1 = "vejnavn_bynavn";
-                }
-                if (query.match(/\d+/g) !== null) {
-                    type1 = "adresse";
-                }
-                var names = [];
-
-                (function ca() {
-                    $.ajax({
-                        url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/aws/' + type1,
-                        data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase().replace(",", "")) + '","default_operator":"AND"}},"filter":{"term":{"municipalitycode":"0' + komKode + '"}}}}}',
-                        contentType: "application/json; charset=utf-8",
-                        scriptCharset: "utf-8",
-                        dataType: 'jsonp',
-                        jsonp: 'jsonp_callback',
-                        success: function (response) {
-                            $.each(response.hits.hits, function (i, hit) {
-                                var str = hit._source.properties.string;
-                                gids[str] = hit._source.properties.gid;
-                                names.push({value: str});
-                            });
-                            if (names.length === 1 && (type1 === "vejnavn,bynavn" || type1 === "vejnavn_bynavn")) {
-                                type1 = "adresse";
-                                names = [];
-                                gids = [];
-                                ca();
-                            } else {
-                                cb(names);
-                            }
-                        }
-                    })
-                })();
-            }
-        }, {
-            name: 'matrikel',
-            displayKey: 'value',
-            templates: {
-                header: '<h2 class="typeahead-heading">Matrikel</h2>'
-            },
-            source: function (query, cb) {
-                var names = [];
-                type2 = (query.match(/\d+/g) != null) ? "jordstykke" : "ejerlav";
-                (function ca() {
-                    $.ajax({
-                        url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/matrikel/' + type2,
-                        data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase()) + '","default_operator":"AND"}},"filter":{"term":{"komkode":"' + komKode + '"}}}}}',
-                        contentType: "application/json; charset=utf-8",
-                        scriptCharset: "utf-8",
-                        dataType: 'jsonp',
-                        jsonp: 'jsonp_callback',
-                        success: function (response) {
-                            $.each(response.hits.hits, function (i, hit) {
-                                var str = hit._source.properties.string;
-                                gids[str] = hit._source.properties.gid;
-                                names.push({value: str});
-                            });
-                            if (names.length === 1 && (type2 === "ejerlav")) {
-                                type2 = "jordstykke";
-                                names = [];
-                                gids = [];
-                                ca();
-                            } else {
-                                cb(names);
-                            }
-                        }
-                    })
-                })();
-            }
-        });
-        $('#places .typeahead').bind('typeahead:selected', function (obj, datum, name) {
-            if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel")) {
-                placeStore.reset();
-
-                if (name === "matrikel") {
-                    placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM matrikel.jordstykke WHERE gid=" + gids[datum.value];
-                }
-                if (name === "adresse") {
-                    placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang WHERE gid=" + gids[datum.value];
-                }
-                searchString = datum.value;
-                placeStore.load();
-            } else {
-                setTimeout(function () {
-                    $(".typeahead").val(datum.value + " ").trigger("paste").trigger("input");
-                }, 100)
-            }
-        });
-
+    init = function (me) {
+        createSearch(me);
         var metaData, layers = {}, extent = null, i,
             socket = io.connect();
         socket.on(socketId, function (data) {
@@ -849,7 +732,7 @@ Viewer = function () {
                                     $('#modal-info-body').show();
                                     var fieldConf = $.parseJSON(metaDataKeys[value.split(".")[1]].fieldconf);
                                     $("#info-tab").append('<li><a data-toggle="tab" href="#_' + index + '">' + layerTitel + '</a></li>');
-                                    $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-title="' + layerTitel + '" data-gc2-store="' + index + '">Søg med dette objekt</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
+                                    $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-title="' + layerTitel + '" data-gc2-store="' + index + '">' + __('Search with this object') + '</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
 
                                     $.each(layerObj.geoJSON.features, function (i, feature) {
                                         if (fieldConf === null) {
@@ -933,6 +816,11 @@ Viewer = function () {
         init: init,
         cloud: cloud,
         setBaseLayer: setBaseLayer,
-        schema: schema
+        schema: schema,
+        urlVars: urlVars,
+        clearDrawItems: clearDrawItems,
+        clearInfoItems: clearInfoItems,
+        drawnItems: drawnItems,
+        makeConflict: makeConflict
     };
 };

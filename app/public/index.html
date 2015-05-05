@@ -42,7 +42,7 @@
     window.go = function () {
         $("body").html(this.Templates["body.tmpl"].render(gc2i18n.dict));
         window.MapCentia = new Viewer();
-        MapCentia.init();
+        MapCentia.init(window.MapCentia);
         $("[data-toggle=tooltip]").tooltip();
         $(".center").hide();
         $("#pane").hide().fadeIn(1500);
@@ -70,7 +70,7 @@
 <script src="js/templates.js?e6d30bbaa8175b2e" type="text/javascript"></script>
 <script src="js/viewer.js?5fa7a18c0ba7d528" type="text/javascript"></script>
 <!-- /build -->
-<script src="http://eu1.mapcentia.com/api/v3/js/geocloud.php?callback=go&maplib=leaflet"
+<script src="http://eu1.mapcentia.com/api/v3/js/geocloud.php?callback=go&maplib=leaflet&i18n=/js/i18n/"
         type="text/javascript"></script>
 </html>
 

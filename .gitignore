@@ -3,6 +3,7 @@
 node_modules/
 app/config/nodeConfig.js
 app/config/browserConfig.js
+app/config/browserify.js
 app/public/js/bundle.js
 app/public/tmp/
 app/tmp/

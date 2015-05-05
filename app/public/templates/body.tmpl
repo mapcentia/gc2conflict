@@ -7,8 +7,8 @@
                 <div id="buffer-container">
                     <div class="form-inline">
                         <div class="form-group">
-                            <label for="buffer">Buffer</label>
-                            <input id="buffer" type="text" class="form-control" placeholder="Meter">
+                            <label for="buffer">{{Buffer}}</label>
+                            <input id="buffer" type="text" class="form-control" placeholder="{{Meters}}">
                         </div>
                     </div>
                 </div>
@@ -19,26 +19,26 @@
                 <ul class="nav nav-tabs" role="tablist" id="main-tabs">
                     <li role="presentation" class="active"><a href="#search-content" aria-controls="search-content"
                                                               role="tab"
-                                                              data-toggle="tab">Søg</a></li>
+                                                              data-toggle="tab">{{Search}}</a></li>
                     <li role="presentation"><a href="#result-content" aria-controls="" role="tab"
-                                               data-toggle="tab">Resultat</a></li>
+                                               data-toggle="tab">{{Result}}</a></li>
                     <li role="presentation"><a href="#info-content" aria-controls="info-content" role="tab"
-                                               data-toggle="tab">Info</a></li>
+                                               data-toggle="tab">{{Info}}</a></li>
                     <li role="presentation"><a href="#layer-content" aria-controls="" role="tab"
-                                               data-toggle="tab">Lag</a></li>
+                                               data-toggle="tab">{{Layers}}</a></li>
                     <li role="presentation"><a href="#legend-content" aria-controls="" role="tab"
-                                               data-toggle="tab">Signatur</a></li>
+                                               data-toggle="tab">{{Legend}}</a></li>
                     <li role="presentation"><a href="#help-content" aria-controls="" role="tab"
-                                               data-toggle="tab">Hjælp</a></li>
+                                               data-toggle="tab">{{Help}}</a></li>
                     <li role="presentation"><a href="#log-content" aria-controls="" role="tab"
-                                               data-toggle="tab">Log</a></li>
+                                               data-toggle="tab">{{Log}}</a></li>
                 </ul>
 
                 <!-- Tab panes -->
                 <div class="tab-content">
                     <div role="tabpanel" class="tab-pane active" id="search-content">
                         <div id="places">
-                            <input class="typeahead" type="text" placeholder="Adresse eller matrikelnr.">
+                            <input id="custom-search" class="typeahead" type="text" placeholder="{{Address}}">
                         </div>
                     </div>
 
@@ -46,7 +46,7 @@
                         <div id="result">
                             <div id="result-origin"></div>
                             <button class="btn btn-primary btn-xs" id="print-btn"
-                               disabled="true">Print rapport<img src='http://www.gifstache.com/images/ajax_loader.gif' class='print-spinner'/></button>
+                               disabled="true">{{Print report}}<img src='http://www.gifstache.com/images/ajax_loader.gif' class='print-spinner'/></button>
                             <button class="btn btn-primary btn-xs" id="geomatic-btn"
                                     disabled="true">Hent Geomatic<img src='http://www.gifstache.com/images/ajax_loader.gif' class='print-spinner'/></button>
 
@@ -55,18 +55,18 @@
                                 <ul class="nav nav-tabs" role="tablist">
                                     <li role="presentation" class="active"><a href="#hits-content"
                                                                               aria-controls="hits-content" role="tab"
-                                                                              data-toggle="tab">Med konflikter<span></span></a>
+                                                                              data-toggle="tab">{{With conflicts}}<span></span></a>
                                     </li>
                                     <li role="presentation"><a href="#hits-data-content"
                                                                               aria-controls="hits-data-content" role="tab"
-                                                                              data-toggle="tab">Data fra Konflikter<span></span></a>
+                                                                              data-toggle="tab">{{Data from conflicts}}<span></span></a>
                                     </li>
                                     <li role="presentation"><a href="#nohits-content" aria-controls="nohits-content"
                                                                role="tab"
-                                                               data-toggle="tab">Uden konflikter<span></span></a></li>
+                                                               data-toggle="tab">{{Without conflicts}}<span></span></a></li>
                                     <li role="presentation"><a href="#error-content" aria-controls="error-content"
                                                                role="tab"
-                                                               data-toggle="tab">Fejl<span></span></a></li>
+                                                               data-toggle="tab">{{Errors}}<span></span></a></li>
                                 </ul>
 
                                 <!-- Tab panes -->
@@ -76,9 +76,9 @@
                                             <table class="table table-hover">
                                                 <thead>
                                                 <tr>
-                                                    <th>Lag</th>
-                                                    <th>Antal objekter</th>
-                                                    <th>Vis</th>
+                                                    <th>{{Layer}}</th>
+                                                    <th>{{Number of objects}}</th>
+                                                    <th>{{Show}}</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody></tbody>
@@ -94,9 +94,9 @@
                                             <table class="table table-hover">
                                                 <thead>
                                                 <tr>
-                                                    <th>Lag</th>
-                                                    <th>Antal hits</th>
-                                                    <th>Vis</th>
+                                                    <th>{{Layer}}</th>
+                                                    <th>{{Number of objects}}</th>
+                                                    <th>{{Show}}</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody></tbody>
@@ -108,8 +108,8 @@
                                             <table class="table table-hover">
                                                 <thead>
                                                 <tr>
-                                                    <th>Lag</th>
-                                                    <th>Alvorlighed</th>
+                                                    <th>{{Layer}}</th>
+                                                    <th>{{Severity}}</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody></tbody>
@@ -121,7 +121,7 @@
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="info-content">
-                        <div class="alert alert-info" role="alert">Når du klikker på et tændt lag, vises resultatet har. Du kan derefter søge med objektet.</div>
+                        <div class="alert alert-info" role="alert">{{{Info text}}}</div>
 
                         <div id="info-box">
                             <div id="modal-info-body">
@@ -158,7 +158,7 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav" style="float: left">
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{{Baselayers}}} <b
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{Baselayers}} <b
                                 class="caret"></b></a>
                         <ul class="dropdown-menu" id="base-layer-list">
                         </ul>
@@ -169,7 +169,7 @@
                         <form class="navbar-form navbar-left" role="search" onsubmit="return false;">
                             <div class="form-group">
                                 <input type="text" id="search-input" name="search-input" class="form-control"
-                                       placeholder="{{{Search}}}">
+                                       placeholder="{{Search}}">
                             </div>
                         </form>
                     </li>

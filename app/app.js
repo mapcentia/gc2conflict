@@ -192,16 +192,15 @@ app.post('/intersection', function (req, response) {
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
     if (buffer > 0) {
         var crss = {
-            "EPSG:25832": "+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs",
-            "EPSG:3857": "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs",
-            "EPSG:4326": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+            "proj": "+proj=utm +zone=" + nodeConfig.utmZone + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+            "unproj": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         };
 
         var reader = new jsts.io.GeoJSONParser();
         var writer = new jsts.io.GeoJSONWriter();
 
-        var geom = reader.read(reproject.reproject(primitive, "EPSG:4326", "EPSG:25832", crss));
-        buffer4326 = reproject.reproject(writer.write(geom.buffer(buffer)), "EPSG:25832", "EPSG:4326", crss);
+        var geom = reader.read(reproject.reproject(primitive, "unproj", "proj", crss));
+        buffer4326 = reproject.reproject(writer.write(geom.buffer(buffer)), "proj", "unproj", crss);
     }
     fileName = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -323,7 +322,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8181, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
