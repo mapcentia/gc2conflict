@@ -1,4 +1,3 @@
-var gc2i18n;
 gc2i18n = {
     dict: {
         /* Start of viewer and widget */
@@ -24,6 +23,7 @@ gc2i18n = {
         "Baselayers": "Baggrund",
         "Print report": "Print rapport",
         "Search with this object": "Søg med dette objekt",
+        "From drawing": "Fra tegning",
         // Drawing
         "Cancel drawing": " Afbryd tegning",
         "Cancel": "Afbryd",
@@ -55,6 +55,11 @@ gc2i18n = {
         "No drawings to delete.": "Ingen tegning at slette.",
         "Drag handles, or marker to edit drawing.": "Træk håndtag, eller markør for at ændre tegning.",
         "Click cancel to undo changes.": "Klik afbryd for at omgøre ændring.",
-        "Click on a drawing to remove": " Klik tegning for at slette."
+        "Click on a drawing to remove": " Klik tegning for at slette.",
+        // Report
+        "Get as PDF": "Hent som PDF",
+        "Conflicts": "Konflikter",
+        "No Conflicts": "Ingen konflikter"
     }
 };
+module.exports = gc2i18n;

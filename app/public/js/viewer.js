@@ -230,14 +230,14 @@ Viewer = function () {
     cloud.map.on('draw:drawstop', function (e) {
         var geoJSON = geoJSONFromDraw();
         if (geoJSON) {
-            makeConflict(geoJSON[0], geoJSON[1], false, "Fra tegning");
+            makeConflict(geoJSON[0], geoJSON[1], false, __("From drawing"));
             drawing = false;
         }
     });
     cloud.map.on('draw:editstop', function (e) {
         var geoJSON = geoJSONFromDraw();
         if (geoJSON) {
-            makeConflict(geoJSON[0], geoJSON[1], false, "Fra tegning");
+            makeConflict(geoJSON[0], geoJSON[1], false, __("From drawing"));
             drawing = false;
         }
     });

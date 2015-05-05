@@ -1,4 +1,3 @@
-var gc2i18n;
 gc2i18n = {
     dict: {
         /* Start of viewer and widget */
@@ -24,6 +23,7 @@ gc2i18n = {
         "Baselayers": "Baselayers",
         "Print report": "Print report",
         "Search with this object": "Search with this object",
+        "From drawing": "From drawing",
         // Drawing
         "Cancel drawing": "Cancel drawing",
         "Cancel": "Cancel",
@@ -55,6 +55,11 @@ gc2i18n = {
         "No drawings to delete.": "No drawings to delete.",
         "Drag handles, or marker to edit drawing.": "Drag handles, or marker to edit drawing.",
         "Click cancel to undo changes.": "Click cancel to undo changes.",
-        "Click on a drawing to remove": "Click on a drawing to remove"
+        "Click on a drawing to remove": "Click on a drawing to remove",
+        // Report
+        "Get as PDF": "Get as PDF",
+        "Conflicts": "Conflicts",
+        "No Conflicts": "No Conflicts"
     }
 };
+module.exports = gc2i18n;

@@ -10,18 +10,30 @@ var bodyParser = require('body-parser');
 var moment = require('moment');
 var nodeConfig = require('./config/nodeConfig');
 var http = require('http');
-var querystring = require('querystring');
 var exec = require('child_process').exec;
+var gc2i18n = require('./config/localModules/' + nodeConfig.locale);
 
-var app = express();
+// Define the i18n function
+var __ = function (string) {
+    if (typeof gc2i18n !== 'undefined') {
+        if (gc2i18n.dict[string]) {
+            return gc2i18n.dict[string];
+        }
+    }
+    return string;
+};
 // Set locale for date/time string
-moment.locale("da");
+moment.locale(nodeConfig.locale);
+
+// Setup Express
+var app = express();
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
 app.use(bodyParser.json({extended: true, limit: '50mb'}));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Setup routes
 app.get('/geoserver', function (req, response) {
     var url = "http://" + nodeConfig.print.host + ":" + nodeConfig.print.port + "/geoserver/pdf/info.json?var=printConfig";
     http.get(url, function (res) {
@@ -117,7 +129,9 @@ app.get('/html', function (req, res) {
             id: req.query.id,
             addr: addr
         };
-        res.render('static', {layout: 'layout', json: json});
+        var input = json;
+        input.i18n = gc2i18n;
+        res.render('static', {layout: 'layout', json: input});
     });
 });
 app.post('/print', function (req, response) {
@@ -345,7 +359,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8181, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
