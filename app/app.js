@@ -191,8 +191,31 @@ app.post('/intersection', function (req, response) {
     var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
     if (buffer > 0) {
+        // Get the UTM zone
+        var log = primitive.bbox[0], lat = primitive.bbox[1],
+            zoneNumber = Math.floor((log + 180) / 6) + 1;
+
+        if (lat >= 56.0 && lat < 64.0 && log >= 3.0 && log < 12.0) {
+            zoneNumber = 32;
+        }
+        //Special zones for Svalbard
+        if (lat >= 72.0 && lat < 84.0) {
+            if (log >= 0.0 && log < 9.0) {
+                zoneNumber = 31;
+            }
+            else if (log >= 9.0 && log < 21.0) {
+                zoneNumber = 33;
+            }
+            else if (log >= 21.0 && log < 33.0) {
+                zoneNumber = 35;
+            }
+            else if (log >= 33.0 && log < 42.0) {
+                zoneNumber = 37;
+            }
+        }
+        console.log("Zone:" + zoneNumber);
         var crss = {
-            "proj": "+proj=utm +zone=" + nodeConfig.utmZone + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+            "proj": "+proj=utm +zone=" + zoneNumber + " +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
             "unproj": "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         };
 
@@ -322,7 +345,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8181, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
