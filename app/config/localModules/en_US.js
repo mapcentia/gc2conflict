@@ -24,6 +24,7 @@ gc2i18n = {
         "Print report": "Print report",
         "Search with this object": "Search with this object",
         "From drawing": "From drawing",
+        "From object in layer": "From object in layer",
         // Drawing
         "Cancel drawing": "Cancel drawing",
         "Cancel": "Cancel",

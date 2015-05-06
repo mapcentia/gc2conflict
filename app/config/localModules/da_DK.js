@@ -24,6 +24,7 @@ gc2i18n = {
         "Print report": "Print rapport",
         "Search with this object": "Søg med dette objekt",
         "From drawing": "Fra tegning",
+        "From object in layer": "Fra objekt i lag",
         // Drawing
         "Cancel drawing": " Afbryd tegning",
         "Cancel": "Afbryd",
