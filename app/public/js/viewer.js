@@ -186,7 +186,8 @@ Viewer = function () {
     });
     cloud = new geocloud.map({
         el: "map",
-        zoomControl: false
+        zoomControl: false,
+        numZoomLevels: 21
     });
     zoomControl = L.control.zoom({
         position: 'topright'
