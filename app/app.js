@@ -306,6 +306,8 @@ app.post('/intersection', function (req, response) {
                             }
                             hit = {
                                 table: table,
+                                title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                group: metaDataKeys[table.split(".")[1]].layergroup,
                                 hits: result.rows.length,
                                 data: data,
                                 num: count + "/" + metaDataFinal.data.length,
@@ -316,6 +318,8 @@ app.post('/intersection', function (req, response) {
                         } else {
                             hit = {
                                 table: table,
+                                title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                group: metaDataKeys[table.split(".")[1]].layergroup,
                                 hits: null,
                                 num: null,
                                 time: time,
