@@ -12,6 +12,7 @@ var nodeConfig = require('./config/nodeConfig');
 var http = require('http');
 var exec = require('child_process').exec;
 var gc2i18n = require('./config/localModules/' + nodeConfig.locale);
+var cors = require('cors');
 
 // Define the i18n function
 var __ = function (string) {
@@ -27,6 +28,7 @@ moment.locale(nodeConfig.locale);
 
 // Setup Express
 var app = express();
+app.use(cors());
 app.use(bodyParser.urlencoded({extended: true, limit: '50mb'}));
 app.use(bodyParser.json({extended: true, limit: '50mb'}));
 app.set('views', __dirname + '/views');
