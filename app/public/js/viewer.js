@@ -299,6 +299,12 @@ Viewer = function () {
         dataItems.clearLayers();
     };
 
+    var clearAllItems = function () {
+        clearDrawItems();
+        clearInfoItems();
+        clearDataItems();
+    };
+
     var geoJSONFromDraw = function () {
         var layer, buffer = 0;
         for (var prop in drawnItems._layers) {
@@ -545,6 +551,23 @@ Viewer = function () {
             }); // Ajax call end
         });
 
+        $("#remove-all-btn").on("click", function () {
+            clearAllItems();
+        });
+
+        $("#mapclient-btn").on("click", function () {
+            var center = cloud.getCenter(), zoom = cloud.getZoom(), req, layers = cloud.getVisibleLayers(true).split(";"),
+                layerStrs = [];
+
+            for (i = 0; i < layers.length; i = i + 1) {
+                if (layers[i] !== "") {
+                    layerStrs.push("map_visibility_" + layers[i] + "=true");
+                }
+            }
+            req = "map_x=" + center.x + "&map_y=" + center.y + "&map_zoom=" + zoom + "&" + layerStrs.join("&");
+            window.open(hostname + "/apps/mapclient/" + db + "/" + schema + "?" + req);
+        });
+
         if (typeof window.browserConfig.enableGeomatic === "undefined" || window.browserConfig.enableGeomatic === false) {
             $("#geomatic-btn").hide();
         }
@@ -587,11 +610,11 @@ Viewer = function () {
                     });
                 }
                 for (i = 0; i < arr.length; ++i) {
-                    if (arr[i] && arr[i] !== "Master" && arr[i] !== "Default group") {
+                    if (arr[i]) {
                         l = [];
                         cv = ( typeof (metaDataKeysTitle[arr[i]]) === "object") ? metaDataKeysTitle[arr[i]].f_table_name : null;
                         base64name = Base64.encode(arr[i]).replace(/=/g, "");
-                        $("#layers").append('<div class="panel panel-default"><div class="panel-heading" role="tab"><h4 class="panel-title"><a class="accordion-toggle" data-toggle="collapse" data-parent="#layers" href="#collapse' + base64name + '"> ' + arr[i] + ' </a></h4></div><ul class="list-group" id="group-' + base64name + '" role="tabpanel"></ul></div>');
+                        $("#layers").append('<div class="panel panel-default" id="layer-panel-' + base64name + '"><div class="panel-heading" role="tab"><h4 class="panel-title"><a class="accordion-toggle" data-toggle="collapse" data-parent="#layers" href="#collapse' + base64name + '"> ' + arr[i] + ' </a></h4></div><ul class="list-group" id="group-' + base64name + '" role="tabpanel"></ul></div>');
                         $("#group-" + base64name).append('<div id="collapse' + base64name + '" class="accordion-body collapse"></div>');
                         response.data.reverse();
                         for (u = 0; u < response.data.length; ++u) {
@@ -604,14 +627,13 @@ Viewer = function () {
                                 }
                                 else {
                                     $("#collapse" + base64name).append('<li class="list-group-item"><span class="checkbox"><label><input type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '</label></span></li>');
-                                    l.push({
-                                        text: (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title,
-                                        id: response.data[u].f_table_schema + "." + response.data[u].f_table_name,
-                                        leaf: true,
-                                        checked: false
-                                    });
+                                    l.push({});
                                 }
                             }
+                        }
+                        // Remove the group if empty
+                        if (l.length === 0) {
+                            $("#layer-panel-" + base64name).remove();
                         }
                     }
                 }

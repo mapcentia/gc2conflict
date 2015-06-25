@@ -25,6 +25,7 @@ gc2i18n = {
         "Search with this object": "Search with this object",
         "From drawing": "From drawing",
         "From object in layer": "From object in layer",
+        "Clear map": "Clear map",
         // Drawing
         "Cancel drawing": "Cancel drawing",
         "Cancel": "Cancel",
