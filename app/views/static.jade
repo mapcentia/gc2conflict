@@ -29,7 +29,6 @@ html
                                                                     if row.key == false
                                                                          td #{row.value}
                         h3 #{json.i18n.dict["No Conflicts"]}
-                        table(class="table")
-                            each val, key in json.noHits
-                                tr
-                                    td #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name}
+                        each val, key in json.noHits
+                             span #{json.metaDataKeys[val.table.split(".")[1]].f_table_title || json.metaDataKeys[val.table.split(".")[1]].f_table_name}
+                             span &nbsp;&nbsp;|&nbsp;&nbsp;
