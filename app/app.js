@@ -57,7 +57,7 @@ app.get('/static', function (req, response) {
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
 app.get('/pdf', function (req, response) {
-    var url = "http://localhost:8080/?url=127.0.0.1:80/html?id=" + req.query.id;
+    var url = "http://localhost:8090/?url=127.0.0.1:80/html?id=" + req.query.id;
     http.get(url, function (res) {
         var chunks = [];
         res.on('data', function (chunk) {
