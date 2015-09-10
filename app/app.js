@@ -13,6 +13,9 @@ var http = require('http');
 var exec = require('child_process').exec;
 var gc2i18n = require('./config/localModules/' + nodeConfig.locale);
 var cors = require('cors');
+var CartoDB = require('cartodb');
+
+var BACKEND = "cartodb";
 
 // Define the i18n function
 var __ = function (string) {
@@ -184,6 +187,94 @@ app.post('/print', function (req, response) {
     staticMapReq.write(postData);
     staticMapReq.end();
 });
+
+app.get('/meta', function (req, response) {
+    var db = req.query.db, schema = req.query.schema, url, layers, data = [];
+    switch (BACKEND) {
+        case "gc2":
+            url = "http://" + nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
+            break;
+        case "cartodb":
+            url = "http://" + db + ".cartodb.com/api/v2/viz/" + schema + "/viz.json";
+            break;
+    }
+    http.get(url, function (res) {
+        var chunks = [];
+        res.on('data', function (chunk) {
+            chunks.push(chunk);
+        });
+        res.on("end", function () {
+            var jsfile = new Buffer.concat(chunks);
+            response.header('content-type', 'application/json');
+            if (BACKEND === "cartodb") {
+                try {
+                    layers = JSON.parse(jsfile).layers[1].options.layer_definition.layers;
+                } catch (e) {
+                    console.log(e);
+                }
+                //console.log(layers);
+                for (var i = 0; i < layers.length; i++) {
+                    data.push({
+                        f_table_schema: "public",
+                        f_table_name: layers[i].options.layer_name,
+                        f_table_title: layers[i].options.layer_name,
+                        f_geometry_column: "the_geom_webmercator",
+                        srid: "900913",
+                        sql: layers[i].options.sql,
+                        cartocss: layers[i].options.cartocss,
+                        layergroup: "hej",
+                        fieldconf: null
+                    })
+                }
+                jsfile = {
+                    data: data,
+                    success: true
+                }
+            }
+            response.send(jsfile);
+        });
+    }).on("error", function () {
+        callback(null);
+    });
+});
+
+app.get('/setting', function (req, response) {
+    var db = req.query.db, url, extents = {}, schema = req.query.schema;
+    switch (BACKEND) {
+        case "gc2":
+            url = "http://" + nodeConfig.host + "/api/v1/setting/" + db;
+            break;
+        case "cartodb":
+            url = "http://" + db + ".cartodb.com/api/v2/viz/" + schema + "/viz.json";
+            break;
+    }
+
+    http.get(url, function (res) {
+        var chunks = [];
+        res.on('data', function (chunk) {
+            chunks.push(chunk);
+        });
+        res.on("end", function () {
+            var jsfile = new Buffer.concat(chunks), bounds;
+            response.header('content-type', 'application/json');
+            if (BACKEND === "cartodb") {
+                try {
+                    bounds = JSON.parse(jsfile).bounds;
+                } catch (e) {
+                    console.log(e)
+                }
+                extents[schema] = bounds;
+                jsfile = {
+                    data: {extents: extents},
+                    success: true
+                }
+            }
+            response.send(jsfile);
+        });
+    }).on("error", function () {
+        callback(null);
+    });
+});
 app.post('/intersection', function (req, response) {
     var socketId, fileName, baseLayer, layers, buffer, db, schema, text;
     if (!req.body.wkt) {
@@ -202,7 +293,7 @@ app.post('/intersection', function (req, response) {
     baseLayer = req.body.baselayer;
     layers = req.body.layers;
     var conString = "postgres://" + nodeConfig.pg.user + ":" + nodeConfig.pg.pw + "@" + nodeConfig.pg.host + "/" + db;
-    var url = "http://" + nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
+    var url = "http://127.0.0.1:8080/meta?db=" + db + "&schema=" + schema;
     var wkt = req.body.wkt;
     var buffer4326 = null;
     var primitive = JSON.parse(terraformer.parse(wkt).toJson());
@@ -245,127 +336,264 @@ app.post('/intersection', function (req, response) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
-    pg.connect(conString, function (err, client, done) {
-        if (err) {
-            return console.error('error fetching client from pool', err);
-        }
-        request.get(url, function (err, res, body) {
-            if (!err) {
-                var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [];
-                // Count layers
-                for (var i = 0; i < metaData.data.length; i = i + 1) {
-                    if (metaData.data[i].type !== "RASTER" &&
-                        metaData.data[i].baselayer !== true &&
-                        metaData.data[i].skipconflict !== true) {
-                        metaDataFinal.data.push(metaData.data[i]);
-                        metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
-                    }
+    switch (BACKEND) {
+        case "gc2":
+            pg.connect(conString, function (err, client, done) {
+                if (err) {
+                    return console.error('error fetching client from pool', err);
                 }
-                (function iter() {
-                    geomField = metaDataFinal.data[count].f_geometry_column;
-                    table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
-                    if (buffer > 0) {
-                        sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
-                        bindings = [wkt, buffer];
-                    } else {
-                        sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
-                        bindings = [wkt];
-                    }
-                    startTime = new Date().getTime();
-                    client.query(sql, bindings, function (err, result) {
-                        var time = new Date().getTime() - startTime, queryables, data = [], tmp = [];
-                        count++;
-                        if (!err) {
-                            // Get values if queryable
-                            queryables = JSON.parse(metaDataKeys[table.split(".")[1]].fieldconf);
-                            for (var i = 0; i < result.rows.length; i++) {
-                                for (var prop in queryables) {
-                                    if (queryables.hasOwnProperty(prop)) {
-                                        if (queryables[prop].conflict) {
+                request.get(url, function (err, res, body) {
+                    if (!err) {
+                        var metaData = JSON.parse(body), count = 0, table, sql, geomField, bindings, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [];
+                        // Count layers
+                        for (var i = 0; i < metaData.data.length; i = i + 1) {
+                            if (metaData.data[i].type !== "RASTER" &&
+                                metaData.data[i].baselayer !== true &&
+                                metaData.data[i].skipconflict !== true) {
+                                metaDataFinal.data.push(metaData.data[i]);
+                                metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
+                            }
+                        }
+                        (function iter() {
+                            geomField = metaDataFinal.data[count].f_geometry_column;
+                            table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
+                            if (buffer > 0) {
+                                sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), geography(ST_transform(" + geomField + ",4326)), $2);";
+                                bindings = [wkt, buffer];
+                            } else {
+                                sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
+                                bindings = [wkt];
+                            }
+                            startTime = new Date().getTime();
+                            client.query(sql, bindings, function (err, result) {
+                                var time = new Date().getTime() - startTime, queryables, data = [], tmp = [];
+                                count++;
+                                if (!err) {
+                                    // Get values if queryable
+                                    queryables = JSON.parse(metaDataKeys[table.split(".")[1]].fieldconf);
+                                    for (var i = 0; i < result.rows.length; i++) {
+                                        for (var prop in queryables) {
+                                            if (queryables.hasOwnProperty(prop)) {
+                                                if (queryables[prop].conflict) {
+                                                    tmp.push({
+                                                        name: prop,
+                                                        alias: queryables[prop].alias || prop,
+                                                        value: result.rows[i][prop],
+                                                        sort_id: queryables[prop].sort_id,
+                                                        key: false
+                                                    })
+                                                }
+                                            }
+                                        }
+                                        if (tmp.length > 0) {
                                             tmp.push({
-                                                name: prop,
-                                                alias: queryables[prop].alias || prop,
-                                                value: result.rows[i][prop],
-                                                sort_id: queryables[prop].sort_id,
-                                                key: false
-                                            })
+                                                name: metaDataKeys[table.split(".")[1]].pkey,
+                                                alias: null,
+                                                value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
+                                                sort_id: null,
+                                                key: true
+                                            });
+                                            data.push(tmp);
+                                        }
+                                        tmp = [];
+                                    }
+                                    hit = {
+                                        table: table,
+                                        title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                        group: metaDataKeys[table.split(".")[1]].layergroup,
+                                        hits: result.rows.length,
+                                        data: data,
+                                        num: count + "/" + metaDataFinal.data.length,
+                                        time: time,
+                                        id: socketId,
+                                        error: null
+                                    };
+                                } else {
+                                    hit = {
+                                        table: table,
+                                        title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                        group: metaDataKeys[table.split(".")[1]].layergroup,
+                                        hits: null,
+                                        num: null,
+                                        time: time,
+                                        id: socketId,
+                                        error: err.severity,
+                                        hint: err.hint
+                                    };
+                                }
+                                hits[table] = hit;
+                                io.emit(socketId, hit);
+                                if (metaDataFinal.data.length === count) {
+                                    client.end();
+                                    var report = {
+                                        hits: hits,
+                                        file: fileName,
+                                        geom: buffer4326 || primitive,
+                                        primitive: primitive,
+                                        text: text
+                                    };
+                                    response.send(report);
+                                    // Add meta data and date/time to report before writing to file
+                                    report.metaData = metaDataFinal;
+                                    report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
+                                    fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
+                                        if (err) {
+                                            console.log(err);
+                                        } else {
+                                            console.log("Repport saved");
+                                        }
+                                    });
+                                    return;
+                                }
+                                iter();
+                            });
+
+                        })();
+                        //winston.log('info', resultsObj.message, resultsObj);
+                    } else {
+                        console.log(err);
+                        //winston.log('error', err);
+                    }
+                });
+            });
+            break;
+        case "cartodb":
+            request.get(url, function (err, res, body) {
+                if (!err) {
+                    var metaData = JSON.parse(body), count = 0, table, sql, geomField, startTime, hits = {}, hit, metaDataFinal = {data: []}, metaDataKeys = [], sqlUrl;
+                    // Count layers
+                    for (var i = 0; i < metaData.data.length; i = i + 1) {
+                        if (metaData.data[i].type !== "RASTER" &&
+                            metaData.data[i].baselayer !== true &&
+                            metaData.data[i].skipconflict !== true) {
+                            metaDataFinal.data.push(metaData.data[i]);
+                            metaDataKeys[metaData.data[i].f_table_name] = metaData.data[i];
+                        }
+                    }
+                    (function iter() {
+                        geomField = "the_geom_webmercator";
+                        table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
+                        if (buffer > 0) {
+                            sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM (" + metaDataKeys[table.split(".")[1]].sql + ") as foo WHERE ST_DWithin(ST_GeogFromText('" + wkt + "'), geography(ST_transform(" + geomField + ",4326)), " + buffer + ");";
+                        } else {
+                            sql = "SELECT * FROM (" + metaDataKeys[table.split(".")[1]].sql + ") as foo WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext('" + wkt + "',4326),900913))";
+                        }
+                        startTime = new Date().getTime();
+                        var postData = "q=" + sql,
+                            options = {
+                                method: 'POST',
+                                host: db + ".cartodb.com",
+                                port: "80",
+                                path: '/api/v2/sql',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded ',
+                                    'Content-Length': postData.length
+                                }
+                            };
+                        var req = http.request(options, function (res) {
+                            var chunks = [];
+                            res.on('data', function (chunk) {
+                                chunks.push(chunk);
+                            });
+                            res.on('end', function () {
+                                var jsfile = new Buffer.concat(chunks);
+                                var result = JSON.parse(jsfile);
+                                var time = new Date().getTime() - startTime, queryables, data = [], tmp = [];
+                                count++;
+                                // Get values if queryable
+                                queryables = JSON.parse(metaDataKeys[table.split(".")[1]].fieldconf);
+                                for (var i = 0; i < result.rows.length; i++) {
+                                    for (var prop in queryables) {
+                                        if (queryables.hasOwnProperty(prop)) {
+                                            if (queryables[prop].conflict) {
+                                                tmp.push({
+                                                    name: prop,
+                                                    alias: queryables[prop].alias || prop,
+                                                    value: result.rows[i][prop],
+                                                    sort_id: queryables[prop].sort_id,
+                                                    key: false
+                                                })
+                                            }
                                         }
                                     }
+                                    if (tmp.length > 0) {
+                                        tmp.push({
+                                            name: metaDataKeys[table.split(".")[1]].pkey,
+                                            alias: null,
+                                            value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
+                                            sort_id: null,
+                                            key: true
+                                        });
+                                        data.push(tmp);
+                                    }
+                                    tmp = [];
                                 }
-                                if (tmp.length > 0) {
-                                    tmp.push({
-                                        name: metaDataKeys[table.split(".")[1]].pkey,
-                                        alias: null,
-                                        value: result.rows[i][metaDataKeys[table.split(".")[1]].pkey],
-                                        sort_id: null,
-                                        key: true
-                                    });
-                                    data.push(tmp);
-                                }
-                                tmp = [];
-                            }
-                            hit = {
-                                table: table,
-                                title: metaDataKeys[table.split(".")[1]].f_table_title,
-                                group: metaDataKeys[table.split(".")[1]].layergroup,
-                                hits: result.rows.length,
-                                data: data,
-                                num: count + "/" + metaDataFinal.data.length,
-                                time: time,
-                                id: socketId,
-                                error: null
-                            };
-                        } else {
-                            hit = {
-                                table: table,
-                                title: metaDataKeys[table.split(".")[1]].f_table_title,
-                                group: metaDataKeys[table.split(".")[1]].layergroup,
-                                hits: null,
-                                num: null,
-                                time: time,
-                                id: socketId,
-                                error: err.severity,
-                                hint: err.hint
-                            };
-                        }
-                        hits[table] = hit;
-                        io.emit(socketId, hit);
-                        if (metaDataFinal.data.length === count) {
-                            client.end();
-                            var report = {
-                                hits: hits,
-                                file: fileName,
-                                geom: buffer4326 || primitive,
-                                primitive: primitive,
-                                text: text
-                            };
-                            response.send(report);
-                            // Add meta data and date/time to report before writing to file
-                            report.metaData = metaDataFinal;
-                            report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
-                            fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
-                                if (err) {
-                                    console.log(err);
-                                } else {
-                                    console.log("Repport saved");
-                                }
-                            });
-                            return;
-                        }
-                        iter();
-                    });
+                                hit = {
+                                    table: table,
+                                    title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                    group: metaDataKeys[table.split(".")[1]].layergroup,
+                                    hits: result.rows.length,
+                                    data: data,
+                                    num: count + "/" + metaDataFinal.data.length,
+                                    time: time,
+                                    id: socketId,
+                                    error: null
+                                };
 
-                })();
-                //winston.log('info', resultsObj.message, resultsObj);
-            } else {
-                console.log(err);
-                //winston.log('error', err);
-            }
-        });
-    });
+                               /* hit = {
+                                    table: table,
+                                    title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                    group: metaDataKeys[table.split(".")[1]].layergroup,
+                                    hits: null,
+                                    num: null,
+                                    time: time,
+                                    id: socketId,
+                                    error: err.severity,
+                                    hint: err.hint
+                                };*/
+
+                                hits[table] = hit;
+                                io.emit(socketId, hit);
+                                if (metaDataFinal.data.length === count) {
+                                    var report = {
+                                        hits: hits,
+                                        file: fileName,
+                                        geom: buffer4326 || primitive,
+                                        primitive: primitive,
+                                        text: text
+                                    };
+                                    response.send(report);
+                                    // Add meta data and date/time to report before writing to file
+                                    report.metaData = metaDataFinal;
+                                    report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
+                                    fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
+                                        if (err) {
+                                            console.log(err);
+                                        } else {
+                                            console.log("Repport saved");
+                                        }
+                                    });
+                                    return;
+                                }
+                                iter();
+                            });
+                        });
+                        req.write(postData);
+                        req.end();
+
+
+                    })();
+                    //winston.log('info', resultsObj.message, resultsObj);
+                } else {
+                    console.log(err);
+                    //winston.log('error', err);
+                }
+            });
+            break;
+    }
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8080, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);

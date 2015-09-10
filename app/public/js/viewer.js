@@ -13,6 +13,7 @@
 var Viewer, print;
 Viewer = function () {
     "use strict";
+    var BACKEND = "cartodb";
     L.drawLocal = {
         draw: {
             toolbar: {
@@ -189,6 +190,7 @@ Viewer = function () {
         zoomControl: false,
         numZoomLevels: 21
     });
+    cloud.map.setView([0, 0], 1);
     zoomControl = L.control.zoom({
         position: 'topright'
     });
@@ -578,11 +580,10 @@ Viewer = function () {
             });
         });
         $.ajax({
-            url: hostname.replace("cdn.", "") + '/api/v1/meta/' + db + '/' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
+            url: '/meta?db=' + db + '&schema=' + (window.gc2Options.mergeSchemata === null ? "" : window.gc2Options.mergeSchemata.join(",") + ',') + (typeof urlVars.i === "undefined" ? "" : urlVars.i.split("#")[0] + ',') + schema,
             scriptCharset: "utf-8",
-            jsonp: 'jsonp_callback',
             success: function (response) {
-                var base64name, authIcon, isBaseLayer, arr, groups, i, l, cv;
+                var base64name, authIcon, isBaseLayer, arr, groups, i, l, cv, u;
                 groups = [];
                 metaData = response;
                 for (i = 0; i < metaData.data.length; i++) {
@@ -594,20 +595,52 @@ Viewer = function () {
                     groups[i] = response.data[i].layergroup;
                 }
                 arr = array_unique(groups).reverse();
-                for (var u = 0; u < response.data.length; ++u) {
-                    isBaseLayer = response.data[u].baselayer ? true : false;
-                    layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
-                        host: hostname,
-                        layers: [response.data[u].f_table_schema + "." + response.data[u].f_table_name],
-                        db: db,
-                        isBaseLayer: isBaseLayer,
-                        tileCached: true,
-                        visibility: false,
-                        wrapDateLine: false,
-                        displayInLayerSwitcher: true,
-                        name: response.data[u].f_table_name,
-                        type: "tms"
-                    });
+
+                switch (BACKEND) {
+                    case "gc2":
+                        for (u = 0; u < response.data.length; ++u) {
+                            isBaseLayer = response.data[u].baselayer ? true : false;
+                            layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
+                                host: hostname,
+                                layers: [response.data[u].f_table_schema + "." + response.data[u].f_table_name],
+                                db: db,
+                                isBaseLayer: isBaseLayer,
+                                tileCached: true,
+                                visibility: false,
+                                wrapDateLine: false,
+                                displayInLayerSwitcher: true,
+                                name: response.data[u].f_table_name,
+                                type: "tms"
+                            });
+                        }
+                        break;
+
+                    case "cartodb":
+                        var j = 0;
+                        (function iter() {
+                            cartodb.createLayer(cloud.map, {
+                                user_name: db,
+                                type: 'cartodb',
+                                sublayers: [{
+                                    sql: response.data[j].sql,
+                                    cartocss: response.data[j].cartocss
+                                }]
+                            }).on('done', function (layer) {
+                                layer.baseLayer = false;
+                                layer.id = response.data[j].f_table_schema + "." + response.data[j].f_table_name;
+                                cloud.addLayer(layer, response.data[j].f_table_name);
+                                j++;
+
+                                if (j < response.data.length) {
+                                    iter();
+                                } else {
+                                    return;
+
+                                }
+
+                            });
+                        }());
+                        break;
                 }
                 for (i = 0; i < arr.length; ++i) {
                     if (arr[i]) {
@@ -646,9 +679,8 @@ Viewer = function () {
             }
         }); // Ajax call end
         $.ajax({
-            url: hostname.replace("cdn.", "") + '/api/v1/setting/' + db,
-            dataType: 'jsonp',
-            jsonp: 'jsonp_callback',
+            url: '/setting?db=' + db + '&schema=' + schema,
+            scriptCharset: "utf-8",
             success: function (response) {
                 if (typeof response.data.extents === "object") {
                     var firstSchema = schema.split(",").length > 1 ? schema.split(",")[0] : schema
@@ -684,7 +716,11 @@ Viewer = function () {
                 } else {
                     setBaseLayer(window.setBaseLayers[0].id);
                     if (extent !== null) {
-                        cloud.zoomToExtent(extent);
+                        if (BACKEND === "cartodb") {
+                            cloud.map.fitBounds(extent);
+                        } else {
+                            cloud.zoomToExtent(extent);
+                        }
                     } else {
                         cloud.zoomToExtent();
                     }
@@ -736,6 +772,7 @@ Viewer = function () {
                         var layerTitel = (metaDataKeys[value.split(".")[1]].f_table_title !== null && metaDataKeys[value.split(".")[1]].f_table_title !== "") ? metaDataKeys[value.split(".")[1]].f_table_title : metaDataKeys[value.split(".")[1]].f_table_name;
                         var not_querable = metaDataKeys[value.split(".")[1]].not_querable;
                         var versioning = metaDataKeys[value.split(".")[1]].versioning;
+                        var cartoSql = metaDataKeys[value.split(".")[1]].sql;
                         if (geoType !== "POLYGON" && geoType !== "MULTIPOLYGON") {
                             var res = [156543.033928, 78271.516964, 39135.758482, 19567.879241, 9783.9396205,
                                 4891.96981025, 2445.98490513, 1222.99245256, 611.496226281, 305.748113141, 152.87405657,
@@ -743,68 +780,83 @@ Viewer = function () {
                                 1.19432856696, 0.597164283478, 0.298582141739, 0.149291];
                             distance = 5 * res[cloud.getZoom()];
                         }
-                        qstore[index] = new geocloud.sqlStore({
-                            host: hostname,
-                            db: db,
-                            clickable: false,
-                            id: index,
-                            onLoad: function () {
-                                var layerObj = qstore[this.id], out = [], fieldLabel;
-                                isEmpty = layerObj.isEmpty();
-                                if (!isEmpty && !not_querable) {
-                                    $('#modal-info-body').show();
-                                    var fieldConf = $.parseJSON(metaDataKeys[value.split(".")[1]].fieldconf);
-                                    $("#info-tab").append('<li><a data-toggle="tab" href="#_' + index + '">' + layerTitel + '</a></li>');
-                                    $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-title="' + layerTitel + '" data-gc2-store="' + index + '">' + __('Search with this object') + '</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
+                        var onLoad = function () {
+                            var layerObj = qstore[this.id], out = [], fieldLabel;
+                            isEmpty = layerObj.isEmpty();
+                            if (!isEmpty && !not_querable) {
+                                $('#modal-info-body').show();
+                                var fieldConf = $.parseJSON(metaDataKeys[value.split(".")[1]].fieldconf);
+                                $("#info-tab").append('<li><a data-toggle="tab" href="#_' + index + '">' + layerTitel + '</a></li>');
+                                $("#info-pane").append('<div class="tab-pane" id="_' + index + '"><button type="button" class="btn btn-primary btn-xs" data-gc2-title="' + layerTitel + '" data-gc2-store="' + index + '">' + __('Search with this object') + '</button><table class="table table-condensed"><thead><tr><th>' + __("Property") + '</th><th>' + __("Value") + '</th></tr></thead></table></div>');
 
-                                    $.each(layerObj.geoJSON.features, function (i, feature) {
-                                        if (fieldConf === null) {
-                                            $.each(feature.properties, function (name, property) {
-                                                out.push([name, 0, name, property]);
-                                            });
-                                        }
-                                        else {
-                                            $.each(fieldConf, function (name, property) {
-                                                if (property.querable) {
-                                                    fieldLabel = (property.alias !== null && property.alias !== "") ? property.alias : name;
-                                                    if (feature.properties[name] !== undefined) {
-                                                        if (property.link) {
-                                                            out.push([name, property.sort_id, fieldLabel, "<a target='_blank' href='" + (property.linkprefix !== null ? property.linkprefix : "") + feature.properties[name] + "'>" + feature.properties[name] + "</a>"]);
-                                                        }
-                                                        else {
-                                                            out.push([name, property.sort_id, fieldLabel, feature.properties[name]]);
-                                                        }
+                                $.each(layerObj.geoJSON.features, function (i, feature) {
+                                    if (fieldConf === null) {
+                                        $.each(feature.properties, function (name, property) {
+                                            out.push([name, 0, name, property]);
+                                        });
+                                    }
+                                    else {
+                                        $.each(fieldConf, function (name, property) {
+                                            if (property.querable) {
+                                                fieldLabel = (property.alias !== null && property.alias !== "") ? property.alias : name;
+                                                if (feature.properties[name] !== undefined) {
+                                                    if (property.link) {
+                                                        out.push([name, property.sort_id, fieldLabel, "<a target='_blank' href='" + (property.linkprefix !== null ? property.linkprefix : "") + feature.properties[name] + "'>" + feature.properties[name] + "</a>"]);
+                                                    }
+                                                    else {
+                                                        out.push([name, property.sort_id, fieldLabel, feature.properties[name]]);
                                                     }
                                                 }
-                                            });
-                                        }
-                                        out.sort(function (a, b) {
-                                            return a[1] - b[1];
+                                            }
                                         });
-                                        $.each(out, function (name, property) {
-                                            $("#_" + index + " table").append('<tr><td>' + property[2] + '</td><td>' + property[3] + '</td></tr>');
-                                        });
-                                        out = [];
-                                        $('#info-tab a:first').tab('show');
-                                    });
-                                    hit = true;
-                                } else {
-                                    layerObj.reset();
-                                }
-                                count++;
-                                if (count === layers.length) {
-                                    if (!hit) {
-                                        $('#modal-info-body').hide();
                                     }
-                                    $("#info-content button").click(function (e) {
-                                        clearDrawItems();
-                                        makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0, false, __("From object in layer") + ": " + $(this).data('gc2-title'));
+                                    out.sort(function (a, b) {
+                                        return a[1] - b[1];
                                     });
-                                    $('#main-tabs a[href="#info-content"]').tab('show');
-                                    clearDrawItems();
-                                }
+                                    $.each(out, function (name, property) {
+                                        $("#_" + index + " table").append('<tr><td>' + property[2] + '</td><td>' + property[3] + '</td></tr>');
+                                    });
+                                    out = [];
+                                    $('#info-tab a:first').tab('show');
+                                });
+                                hit = true;
+                            } else {
+                                layerObj.reset();
                             }
-                        });
+                            count++;
+                            if (count === layers.length) {
+                                if (!hit) {
+                                    $('#modal-info-body').hide();
+                                }
+                                $("#info-content button").click(function (e) {
+                                    clearDrawItems();
+                                    makeConflict(qstore[$(this).data('gc2-store')].geoJSON.features [0], 0, false, __("From object in layer") + ": " + $(this).data('gc2-title'));
+                                });
+                                $('#main-tabs a[href="#info-content"]').tab('show');
+                                clearDrawItems();
+                            }
+                        };
+
+                        switch (BACKEND) {
+                            case "gc2":
+                                qstore[index] = new geocloud.sqlStore({
+                                    host: hostname,
+                                    db: db,
+                                    clickable: false,
+                                    id: index,
+                                    onLoad: onLoad
+                                });
+                                break;
+                            case "cartodb":
+                                qstore[index] = new geocloud.cartoDbStore({
+                                    host: hostname,
+                                    db: db,
+                                    clickable: false,
+                                    id: index,
+                                    onLoad: onLoad
+                                });
+                                break;
+                        }
                         //cloud.addGeoJsonStore(qstore[index]);
                         infoItems.addLayer(qstore[index].layer);
                         var sql, f_geometry_column = metaDataKeys[value.split(".")[1]].f_geometry_column;
@@ -815,13 +867,13 @@ Viewer = function () {
                         } else {
 
                             if (geoType !== "POLYGON" && geoType !== "MULTIPOLYGON") {
-                                sql = "SELECT * FROM " + value + " WHERE round(ST_Distance(ST_Transform(\"" + f_geometry_column + "\",3857), ST_GeomFromText('POINT(" + coords.x + " " + coords.y + ")',3857))) < " + distance;
+                                sql = "SELECT * FROM " + (BACKEND === "cartodb" ? "(" + cartoSql + ") as foo" : value) + " WHERE round(ST_Distance(ST_Transform(\"" + f_geometry_column + "\",3857), ST_GeomFromText('POINT(" + coords.x + " " + coords.y + ")',3857))) < " + distance;
                                 if (versioning) {
                                     sql = sql + " AND gc2_version_end_date IS NULL ";
                                 }
                                 sql = sql + " ORDER BY round(ST_Distance(ST_Transform(\"" + f_geometry_column + "\",3857), ST_GeomFromText('POINT(" + coords.x + " " + coords.y + ")',3857)))";
                             } else {
-                                sql = "SELECT * FROM " + value + " WHERE ST_Intersects(ST_Transform(ST_geomfromtext('POINT(" + coords.x + " " + coords.y + ")',900913)," + srid + ")," + f_geometry_column + ")";
+                                sql = "SELECT * FROM " + (BACKEND === "cartodb" ? "(" + cartoSql + ") as foo" : value) + " WHERE ST_Intersects(ST_Transform(ST_geomfromtext('POINT(" + coords.x + " " + coords.y + ")',900913)," + srid + ")," + f_geometry_column + ")";
                                 if (versioning) {
                                     sql = sql + " AND gc2_version_end_date IS NULL ";
                                 }
