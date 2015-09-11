@@ -219,6 +219,7 @@ app.get('/meta', function (req, response) {
                         f_table_name: layers[i].options.layer_name,
                         f_table_title: layers[i].options.layer_name,
                         f_geometry_column: "the_geom_webmercator",
+                        pkey: "cartodb_id",
                         srid: "900913",
                         sql: layers[i].options.sql,
                         cartocss: layers[i].options.cartocss,
@@ -500,20 +501,17 @@ app.post('/intersection', function (req, response) {
                                 var result = JSON.parse(jsfile);
                                 var time = new Date().getTime() - startTime, queryables, data = [], tmp = [];
                                 count++;
-                                // Get values if queryable
-                                queryables = JSON.parse(metaDataKeys[table.split(".")[1]].fieldconf);
                                 for (var i = 0; i < result.rows.length; i++) {
-                                    for (var prop in queryables) {
-                                        if (queryables.hasOwnProperty(prop)) {
-                                            if (queryables[prop].conflict) {
+                                    for (var prop in result.rows[i]) {
+                                        if (result.rows[i].hasOwnProperty(prop)) {
                                                 tmp.push({
                                                     name: prop,
-                                                    alias: queryables[prop].alias || prop,
+                                                    alias: prop,
                                                     value: result.rows[i][prop],
-                                                    sort_id: queryables[prop].sort_id,
+                                                    sort_id: 1,
                                                     key: false
                                                 })
-                                            }
+
                                         }
                                     }
                                     if (tmp.length > 0) {
@@ -537,7 +535,8 @@ app.post('/intersection', function (req, response) {
                                     num: count + "/" + metaDataFinal.data.length,
                                     time: time,
                                     id: socketId,
-                                    error: null
+                                    error: null,
+                                    sql: metaDataKeys[table.split(".")[1]].sql
                                 };
 
                                /* hit = {

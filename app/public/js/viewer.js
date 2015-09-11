@@ -410,7 +410,7 @@ Viewer = function () {
                                             }
                                         });
                                         td.append(table2);
-                                        tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search'></i></button></td>");
+                                        tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + (BACKEND === "cartodb" ? v.sql : i) + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search'></i></button></td>");
                                         tr.append(td);
                                         table1.append(tr);
                                     });
@@ -458,18 +458,29 @@ Viewer = function () {
         }); // Ajax call end
     };
     zoomToFeature = function (table, key, fid) {
-        var store;
-        store = new geocloud.geoJsonStore({
-            host: hostname,
-            db: db,
-            sql: "SELECT * FROM " + table + " WHERE " + key + "=" + fid,
-            onLoad: function () {
-                clearDataItems();
-                //clearInfoItems();
-                dataItems.addLayer(this.layer);
-                cloud.zoomToExtentOfgeoJsonStore(this);
-            }
-        });
+        var store, onLoad = function () {
+            clearDataItems();
+            //clearInfoItems();
+            dataItems.addLayer(this.layer);
+            cloud.zoomToExtentOfgeoJsonStore(this);
+        };
+        switch (BACKEND) {
+            case "gc2":
+                store = new geocloud.geoJsonStore({
+                    host: hostname,
+                    db: db,
+                    sql: "SELECT * FROM " + table + " WHERE " + key + "=" + fid,
+                    onLoad: onLoad
+                });
+                break;
+            case "cartodb":
+                store = new geocloud.cartoDbStore({
+                    db: db,
+                    sql: "SELECT * FROM (" + table + ") as foo WHERE " + key + "=" + fid,
+                    onLoad: onLoad
+                });
+                break;
+        }
         store.load();
     };
 // Draw end
