@@ -616,10 +616,8 @@ Viewer = function () {
                         break;
 
                     case "cartodb":
-                        var j = 0, tmpData = response.data.slice(); // Clone the array
+                        var j = 0, tmpData = response.data.slice(); // Clone the array for async adding of CartoDB layers
                         (function iter() {
-                            console.log(j);
-                            console.log(tmpData[j].f_table_name);
                             cartodb.createLayer(cloud.map, {
                                 user_name: db,
                                 type: 'cartodb',
@@ -632,7 +630,6 @@ Viewer = function () {
                                 layer.id = tmpData[j].f_table_schema + "." + tmpData[j].f_table_name;
                                 cloud.addLayer(layer, tmpData[j].f_table_name);
                                 j++;
-
                                 if (j < tmpData.length) {
                                     iter();
                                 } else {

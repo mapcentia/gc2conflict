@@ -13,7 +13,7 @@ var http = require('http');
 var exec = require('child_process').exec;
 var gc2i18n = require('./config/localModules/' + nodeConfig.locale);
 var cors = require('cors');
-var CartoDB = require('cartodb');
+//var CartoDB = require('cartodb');
 
 var BACKEND = "cartodb";
 
@@ -60,7 +60,7 @@ app.get('/static', function (req, response) {
     response.sendFile(__dirname + '/tmp/' + req.query.id);
 });
 app.get('/pdf', function (req, response) {
-    var url = "http://localhost:8090/?url=127.0.0.1:80/html?id=" + req.query.id;
+    var url = "http://localhost:8090/?url=127.0.0.1:8080/html?id=" + req.query.id;
     http.get(url, function (res) {
         var chunks = [];
         res.on('data', function (chunk) {
