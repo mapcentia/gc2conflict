@@ -616,28 +616,28 @@ Viewer = function () {
                         break;
 
                     case "cartodb":
-                        var j = 0;
+                        var j = 0, tmpData = response.data.slice(); // Clone the array
                         (function iter() {
+                            console.log(j);
+                            console.log(tmpData[j].f_table_name);
                             cartodb.createLayer(cloud.map, {
                                 user_name: db,
                                 type: 'cartodb',
                                 sublayers: [{
-                                    sql: response.data[j].sql,
-                                    cartocss: response.data[j].cartocss
+                                    sql: tmpData[j].sql,
+                                    cartocss: tmpData[j].cartocss
                                 }]
                             }).on('done', function (layer) {
                                 layer.baseLayer = false;
-                                layer.id = response.data[j].f_table_schema + "." + response.data[j].f_table_name;
-                                cloud.addLayer(layer, response.data[j].f_table_name);
+                                layer.id = tmpData[j].f_table_schema + "." + tmpData[j].f_table_name;
+                                cloud.addLayer(layer, tmpData[j].f_table_name);
                                 j++;
 
-                                if (j < response.data.length) {
+                                if (j < tmpData.length) {
                                     iter();
                                 } else {
-                                    return;
-
+                                    return null;
                                 }
-
                             });
                         }());
                         break;
