@@ -28,6 +28,8 @@
                                                data-toggle="tab">{{Info}}</a></li>
                     <li role="presentation"><a href="#layer-content" aria-controls="" role="tab"
                                                data-toggle="tab">{{Layers}}</a></li>
+                    <li role="presentation"><a href="#baselayer-content" aria-controls="" role="tab"
+                                               data-toggle="tab">{{Baselayers}}</a></li>
                     <li role="presentation"><a href="#legend-content" aria-controls="" role="tab"
                                                data-toggle="tab">{{Legend}}</a></li>
                     <li role="presentation"><a href="#help-content" aria-controls="" role="tab"
@@ -135,6 +137,11 @@
                     <div role="tabpanel" class="tab-pane" id="layer-content">
                         <div class="panel-group" id="layers" role="tablist" aria-multiselectable="true"></div>
                     </div>
+                    <div role="tabpanel" class="tab-pane" id="baselayer-content">
+                        <div class="panel-group" id="baselayers" role="tablist" aria-multiselectable="true">
+                            <ul class="list-group" id="base-layer-list"></ul>
+                        </div>
+                    </div>
                     <div role="tabpanel" class="tab-pane" id="legend-content">
                         <div id="legend"></div>
                     </div>
@@ -158,14 +165,6 @@
                 </button>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav" style="float: left">
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{Baselayers}} <b
-                                class="caret"></b></a>
-                        <ul class="dropdown-menu" id="base-layer-list">
-                        </ul>
-                    </li>
-                </ul>
                 <ul class="nav navbar-nav">
                     <li>
                         <form class="navbar-form navbar-left" role="search" onsubmit="return false;">

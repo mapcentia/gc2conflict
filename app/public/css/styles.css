@@ -630,3 +630,21 @@ div.olControlZoom {
 .leaflet-control-print{
     display: none !important;
 }
+.base-layer-item {
+    cursor: pointer;
+}
+.layer-item {
+    padding: 0 !important;
+}
+.layer-item label {
+    padding: 10px 15px;
+}
+
+.base-layer-item .fa {
+    float: right;
+    display: none;
+}
+.layer-item .fa {
+    float: right;
+    display: none;
+}

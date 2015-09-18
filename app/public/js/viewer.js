@@ -119,9 +119,11 @@ Viewer = function () {
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
+            $('*[data-gc2-id="' + name + '"]').next("span").show();
             $('*[data-gc2-id="' + name + '"]').prop('checked', true);
         } else {
             cloud.hideLayer(name);
+            $('*[data-gc2-id="' + name + '"]').next("span").hide();
             $('*[data-gc2-id="' + name + '"]').prop('checked', false);
         }
         addLegend();
@@ -500,7 +502,7 @@ Viewer = function () {
             if (typeof window.setBaseLayers[i].restrictTo === "undefined" || window.setBaseLayers[i].restrictTo.indexOf(schema) > -1) {
                 cloud.addBaseLayer(window.setBaseLayers[i].id, window.setBaseLayers[i].db);
                 $("#base-layer-list").append(
-                    "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + window.setBaseLayers[i].id + "')\">" + window.setBaseLayers[i].name + "</a></li>"
+                    "<li class='base-layer-item list-group-item' data-gc2-base-id='" + window.setBaseLayers[i].id + "'>" + window.setBaseLayers[i].name + "<span class='fa fa-check' aria-hidden='true'></span></li>"
                 );
             }
         }
@@ -622,11 +624,11 @@ Viewer = function () {
                                 var text = (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title;
                                 if (response.data[u].baselayer) {
                                     $("#base-layer-list").append(
-                                        "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + response.data[u].f_table_schema + "." + response.data[u].f_table_name + "')\">" + text + "</a></li>"
+                                        "<li class='base-layer-item list-group-item' data-gc2-base-id='" +  response.data[u].f_table_schema + "." + response.data[u].f_table_name  + "'>" + text + "<span class='fa fa-check' aria-hidden='true'></span></li>"
                                     );
                                 }
                                 else {
-                                    $("#collapse" + base64name).append('<li class="list-group-item"><span class="checkbox"><label><input type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '</label></span></li>');
+                                    $("#collapse" + base64name).append('<li class="layer-item list-group-item"><span class="checkbox"><label style="display: block;"><input style="display: none" type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '<span class="fa fa-check" aria-hidden="true"></span></label></span></li>');
                                     l.push({});
                                 }
                             }
@@ -642,7 +644,16 @@ Viewer = function () {
                 $(".checkbox input[type=checkbox]").change(function (e) {
                     switchLayer($(this).data('gc2-id'), $(this).context.checked);
                     e.stopPropagation();
-                })
+                });
+                $(".base-layer-item").on("click", function (e) {
+                    setBaseLayer($(this).data('gc2-base-id'));
+                    e.stopPropagation();
+                    $(".base-layer-item").css("background-color","white");
+                    $(".base-layer-item span").hide();
+
+                    $(this).css("background-color","#f5f5f5");
+                    $(this).children("span").show();
+                });
             }
         }); // Ajax call end
         $.ajax({
