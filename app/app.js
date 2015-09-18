@@ -342,7 +342,7 @@ app.post('/intersection', function (req, response) {
                             response.send(report);
                             // Add meta data and date/time to report before writing to file
                             report.metaData = metaDataFinal;
-                            report.dateTime = moment().format('MMMM Do YYYY, hh:mm');
+                            report.dateTime = moment().format('MMMM Do YYYY, HH:mm');
                             fs.writeFile(__dirname + "/tmp/" + fileName, JSON.stringify(report, null, 4), function (err) {
                                 if (err) {
                                     console.log(err);
