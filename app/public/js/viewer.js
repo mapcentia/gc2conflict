@@ -595,7 +595,7 @@ Viewer = function () {
                 for (i = 0; i < response.data.length; ++i) {
                     groups[i] = response.data[i].layergroup;
                 }
-                arr = array_unique(groups).reverse();
+                arr = array_unique(groups);
                 for (var u = 0; u < response.data.length; ++u) {
                     isBaseLayer = response.data[u].baselayer ? true : false;
                     layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
@@ -611,6 +611,7 @@ Viewer = function () {
                         type: "tms"
                     });
                 }
+                response.data.reverse();
                 for (i = 0; i < arr.length; ++i) {
                     if (arr[i]) {
                         l = [];
@@ -618,7 +619,6 @@ Viewer = function () {
                         base64name = Base64.encode(arr[i]).replace(/=/g, "");
                         $("#layers").append('<div class="panel panel-default" id="layer-panel-' + base64name + '"><div class="panel-heading" role="tab"><h4 class="panel-title"><a class="accordion-toggle" data-toggle="collapse" data-parent="#layers" href="#collapse' + base64name + '"> ' + arr[i] + ' </a></h4></div><ul class="list-group" id="group-' + base64name + '" role="tabpanel"></ul></div>');
                         $("#group-" + base64name).append('<div id="collapse' + base64name + '" class="accordion-body collapse"></div>');
-                        response.data.reverse();
                         for (u = 0; u < response.data.length; ++u) {
                             if (response.data[u].layergroup == arr[i]) {
                                 var text = (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title;
