@@ -187,58 +187,86 @@ app.post('/print', function (req, response) {
     staticMapReq.write(postData);
     staticMapReq.end();
 });
-
 app.get('/meta', function (req, response) {
-    var db = req.query.db, schema = req.query.schema, url, layers, data = [];
+    var db = req.query.db, schema = req.query.schema, url, layers, data = [], u = 0, jsfile = "";
     switch (BACKEND) {
         case "gc2":
             url = "http://" + nodeConfig.host + "/api/v1/meta/" + db + "/" + schema;
+            http.get(url, function (res) {
+                var chunks = [];
+                res.on('data', function (chunk) {
+                    chunks.push(chunk);
+                });
+                res.on("end", function () {
+                    jsfile = new Buffer.concat(chunks);
+                    response.header('content-type', 'application/json');
+                    response.send(jsfile);
+                });
+            }).on("error", function () {
+                callback(null);
+            });
             break;
+
         case "cartodb":
-            url = "http://" + db + ".cartodb.com/api/v2/viz/" + schema + "/viz.json";
+            var schemas = schema.split(",");
+            (function iter() {
+                if (u === schemas.length){
+                    jsfile = {
+                        data: data,
+                        success: true
+                    };
+                    response.header('content-type', 'application/json');
+                    response.send(jsfile);
+                    return;
+                }
+                url = "http://" + db + ".cartodb.com/api/v2/viz/" + schemas[u] + "/viz.json";
+                console.log(url);
+                http.get(url, function (res) {
+                    var statusCode = res.statusCode;
+                    if (statusCode != 200) {
+                        response.header('content-type', 'application/json');
+                        response.status(res.statusCode).send({success: false, message: "Could not get the Viz. Please check CartoDB viz id."});
+                        return;
+                    }
+                    var chunks = [];
+                    res.on('data', function (chunk) {
+                        chunks.push(chunk);
+                    });
+                    res.on("end", function () {
+                        jsfile = new Buffer.concat(chunks);
+                        try {
+                            layers = JSON.parse(jsfile).layers[1].options.layer_definition.layers;
+                        } catch (e) {
+                            console.log(e);
+                        }
+                        //console.log(layers);
+                        for (var i = 0; i < layers.length; i++) {
+                            data.push({
+                                f_table_schema: "public",
+                                f_table_name: layers[i].options.layer_name + "_" + u,
+                                f_table_title: layers[i].options.layer_name,
+                                f_geometry_column: "the_geom_webmercator",
+                                pkey: "cartodb_id",
+                                srid: "900913",
+                                sql: layers[i].options.sql,
+                                cartocss: layers[i].options.cartocss,
+                                layergroup: schemas[u],
+                                fieldconf: null,
+                                legend: layers[i].legend
+
+                            })
+                        }
+                        u++;
+                        iter();
+                    });
+                }).on("error", function () {
+                    callback(null);
+                });
+            }());
             break;
     }
-    http.get(url, function (res) {
-        var chunks = [];
-        res.on('data', function (chunk) {
-            chunks.push(chunk);
-        });
-        res.on("end", function () {
-            var jsfile = new Buffer.concat(chunks);
-            response.header('content-type', 'application/json');
-            if (BACKEND === "cartodb") {
-                try {
-                    layers = JSON.parse(jsfile).layers[1].options.layer_definition.layers;
-                } catch (e) {
-                    console.log(e);
-                }
-                //console.log(layers);
-                for (var i = 0; i < layers.length; i++) {
-                    data.push({
-                        f_table_schema: "public",
-                        f_table_name: layers[i].options.layer_name,
-                        f_table_title: layers[i].options.layer_name,
-                        f_geometry_column: "the_geom_webmercator",
-                        pkey: "cartodb_id",
-                        srid: "900913",
-                        sql: layers[i].options.sql,
-                        cartocss: layers[i].options.cartocss,
-                        layergroup: "hej",
-                        fieldconf: null
-                    })
-                }
-                jsfile = {
-                    data: data,
-                    success: true
-                }
-            }
-            response.send(jsfile);
-        });
-    }).on("error", function () {
-        callback(null);
-    });
-});
 
+});
 app.get('/setting', function (req, response) {
     var db = req.query.db, url, extents = {}, schema = req.query.schema;
     switch (BACKEND) {
@@ -246,6 +274,7 @@ app.get('/setting', function (req, response) {
             url = "http://" + nodeConfig.host + "/api/v1/setting/" + db;
             break;
         case "cartodb":
+            schema = schema.split(",")[0];
             url = "http://" + db + ".cartodb.com/api/v2/viz/" + schema + "/viz.json";
             break;
     }
@@ -275,6 +304,61 @@ app.get('/setting', function (req, response) {
     }).on("error", function () {
         callback(null);
     });
+});
+app.get('/baselayerjs', function (req, response) {
+    var db = req.query.db, url, jsfile, bounds;
+    switch (BACKEND) {
+        case "gc2":
+            url = "http://" + nodeConfig.host + "/api/v1/baselayerjs/" + db;
+            http.get(url, function (res) {
+                var chunks = [];
+                res.on('data', function (chunk) {
+                    chunks.push(chunk);
+                });
+                res.on("end", function () {
+                    jsfile = new Buffer.concat(chunks);
+                    response.header('content-type', 'application/json');
+                    response.send(jsfile);
+                });
+            }).on("error", function () {
+                callback(null);
+            });
+            break;
+        case "cartodb":
+            var gc2Options = {
+                mergeSchemata: null
+            };
+            jsfile = "window.gc2Options = " + JSON.stringify(gc2Options) + ";";
+            jsfile += 'window.setBaseLayers = [{"id":"osm","name":"OSM"},{"id":"stamenToner","name":"Stamen Toner"}];';
+            response.header('content-type', 'application/json');
+            response.send(jsfile);
+            break;
+    }
+});
+app.get('/legend', function (req, response) {
+    var l = req.query.l,db = req.query.db, url, jsfile;
+    switch (BACKEND) {
+        case "gc2":
+            url = "http://" + nodeConfig.host + "/api/v1/legend/json/" + db + "?l=" + l;
+            http.get(url, function (res) {
+                var chunks = [];
+                res.on('data', function (chunk) {
+                    chunks.push(chunk);
+                });
+                res.on("end", function () {
+                    jsfile = new Buffer.concat(chunks);
+                    response.header('content-type', 'application/json');
+                    response.send(jsfile);
+                });
+            }).on("error", function () {
+                callback(null);
+            });
+            break;
+        case "cartodb":
+            response.header('content-type', 'text/plain');
+            response.send("pass");
+            break;
+    }
 });
 app.post('/intersection', function (req, response) {
     var socketId, fileName, baseLayer, layers, buffer, db, schema, text;
@@ -504,13 +588,13 @@ app.post('/intersection', function (req, response) {
                                 for (var i = 0; i < result.rows.length; i++) {
                                     for (var prop in result.rows[i]) {
                                         if (result.rows[i].hasOwnProperty(prop)) {
-                                                tmp.push({
-                                                    name: prop,
-                                                    alias: prop,
-                                                    value: result.rows[i][prop],
-                                                    sort_id: 1,
-                                                    key: false
-                                                })
+                                            tmp.push({
+                                                name: prop,
+                                                alias: prop,
+                                                value: result.rows[i][prop],
+                                                sort_id: 1,
+                                                key: false
+                                            })
 
                                         }
                                     }
@@ -539,17 +623,17 @@ app.post('/intersection', function (req, response) {
                                     sql: metaDataKeys[table.split(".")[1]].sql
                                 };
 
-                               /* hit = {
-                                    table: table,
-                                    title: metaDataKeys[table.split(".")[1]].f_table_title,
-                                    group: metaDataKeys[table.split(".")[1]].layergroup,
-                                    hits: null,
-                                    num: null,
-                                    time: time,
-                                    id: socketId,
-                                    error: err.severity,
-                                    hint: err.hint
-                                };*/
+                                /* hit = {
+                                 table: table,
+                                 title: metaDataKeys[table.split(".")[1]].f_table_title,
+                                 group: metaDataKeys[table.split(".")[1]].layergroup,
+                                 hits: null,
+                                 num: null,
+                                 time: time,
+                                 id: socketId,
+                                 error: err.severity,
+                                 hint: err.hint
+                                 };*/
 
                                 hits[table] = hit;
                                 io.emit(socketId, hit);

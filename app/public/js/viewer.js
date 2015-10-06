@@ -132,43 +132,105 @@ Viewer = function () {
         addLegend();
     };
     addLegend = function () {
-        var param = 'l=' + cloud.getVisibleLayers(true);
-        $.ajax({
-            url: hostname + '/api/v1/legend/json/' + db + '/?' + param,
-            dataType: 'jsonp',
-            jsonp: 'jsonp_callback',
-            success: function (response) {
-                var list = $("<ul/>"), li, classUl, title, className;
-                $.each(response, function (i, v) {
-                    try {
-                        title = metaDataKeys[v.id.split(".")[1]].f_table_title;
-                    }
-                    catch (e) {
-                    }
-                    var u, showLayer = false;
-                    if (typeof v === "object") {
-                        for (u = 0; u < v.classes.length; u = u + 1) {
-                            if (v.classes[u].name !== "") {
-                                showLayer = true;
+        switch (BACKEND) {
+            case "gc2":
+                var param = 'l=' + cloud.getVisibleLayers(true) + '&db=' + db;
+                $.ajax({
+                    url: '/legend?' + param,
+                    success: function (response) {
+                        var list = $("<ul/>"), li, classUl, title, className;
+                        $.each(response, function (i, v) {
+                            try {
+                                title = metaDataKeys[v.id.split(".")[1]].f_table_title;
                             }
-                        }
-                        if (showLayer) {
-                            li = $("<li/>");
-                            classUl = $("<ul/>");
-                            for (u = 0; u < v.classes.length; u = u + 1) {
-                                if (v.classes[u].name !== "" || v.classes[u].name === "_gc2_wms_legend") {
-                                    className = (v.classes[u].name !== "_gc2_wms_legend") ? "<span class='legend-text'>" + v.classes[u].name + "</span>" : "";
-                                    classUl.append("<li><img class='legend-img' src='data:image/png;base64, " + v.classes[u].img + "' />" + className + "</li>");
+                            catch (e) {
+                            }
+                            var u, showLayer = false;
+                            if (typeof v === "object") {
+                                for (u = 0; u < v.classes.length; u = u + 1) {
+                                    if (v.classes[u].name !== "") {
+                                        showLayer = true;
+                                    }
+                                }
+                                if (showLayer) {
+                                    li = $("<li/>");
+                                    classUl = $("<ul/>");
+                                    for (u = 0; u < v.classes.length; u = u + 1) {
+                                        if (v.classes[u].name !== "" || v.classes[u].name === "_gc2_wms_legend") {
+                                            className = (v.classes[u].name !== "_gc2_wms_legend") ? "<span class='legend-text'>" + v.classes[u].name + "</span>" : "";
+                                            classUl.append("<li><img class='legend-img' src='data:image/png;base64, " + v.classes[u].img + "' />" + className + "</li>");
+                                        }
+                                    }
+                                    list.append($("<li>" + title + "</li>"));
+                                    list.append(li.append(classUl));
                                 }
                             }
-                            list.append($("<li>" + title + "</li>"));
-                            list.append(li.append(classUl));
-                        }
+                        });
+                        $('#legend').html(list);
                     }
                 });
-                $('#legend').html(list);
-            }
-        });
+                break;
+            case "cartodb":
+                setTimeout(function () {
+                    var key, legend, list = $("<ul/>"), li, classUl, title, className, rightLabel, leftLabel;
+                    $.each(cloud.getVisibleLayers(true).split(";"), function (i, v) {
+                        key = v.split(".")[1];
+                        if (typeof key !== "undefined") {
+                            legend = metaDataKeys[key].legend;
+                            try {
+                                title = metaDataKeys[key].f_table_title;
+                            }
+                            catch (e) {
+                            }
+                            var u, showLayer = false;
+                            if (legend.type === "category") {
+                                for (u = 0; u < legend.items.length; u = u + 1) {
+                                    if (legend.items[u].name !== "") {
+                                        showLayer = true;
+                                    }
+                                }
+                                if (showLayer) {
+                                    li = $("<li/>");
+                                    classUl = $("<ul/>");
+                                    for (u = 0; u < legend.items.length; u = u + 1) {
+                                        className = "<span class='legend-text'>" + legend.items[u].name + "</span>";
+                                        classUl.append("<li><span style='display: inline-block; height: 15px; width: 15px; background-color: " + legend.items[u].value + ";'></span>" + className + "</li>");
+                                    }
+                                    list.append($("<li>" + title + "</li>"));
+                                    list.append(li.append(classUl));
+                                }
+                            } else if (legend.type === "choropleth") {
+                                for (u = 0; u < legend.items.length; u = u + 1) {
+                                    if (legend.items[u].name !== "") {
+                                        showLayer = true;
+                                    }
+                                }
+                                if (showLayer) {
+                                    li = $("<li/>");
+                                    classUl = $("<ul/>");
+                                    for (u = 0; u < legend.items.length; u = u + 1) {
+                                        if (legend.items[u].name === "Left label") {
+                                            classUl.append("<li style='display:inline;'><span class='legend-text'>" + legend.items[u].value + "</span></li>");
+                                        } else if(legend.items[u].name === "Right label"){
+                                            rightLabel = "<li style='display:inline;'><span class='legend-text'>" + legend.items[u].value + "</span></li>"
+                                        } else {
+                                            classUl.append("<li style='display:inline;'><span style='display: inline-block; height: 15px; width: 15px; background-color: " + legend.items[u].value + ";'></span></li>");
+                                        }
+                                    }
+                                    classUl.append(rightLabel);
+                                    list.append($("<li>" + title + "</li>"));
+                                    list.append(li.append(classUl));
+                                }
+                            }
+
+                        }
+                    });
+                    $('#legend').html(list);
+                }, 500);
+
+                break;
+        }
+
     };
 
     autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-input'));
@@ -336,7 +398,7 @@ Viewer = function () {
         searchFinish = false;
     };
     makeConflict = function (geoJSON, buffer, zoomToBuffer, text) {
-        var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers, baseLayer;
+        var bufferFromForm = $("#buffer").val(), showBuffer = false, visibleLayers, baseLayer, maxZoom = 18;
         if ($.isNumeric(bufferFromForm)) {
             buffer = Number(buffer) + Number(bufferFromForm);
             showBuffer = true;
@@ -452,6 +514,9 @@ Viewer = function () {
                 }
                 if (zoomToBuffer) {
                     cloud.map.fitBounds(bufferGeom.getBounds());
+                    if (cloud.map.getBoundsZoom(bufferGeom.getBounds()) > maxZoom) {
+                        cloud.map.setZoom(maxZoom);
+                    }
                 }
                 geomStr = response.geom;
             }
@@ -684,6 +749,9 @@ Viewer = function () {
                     switchLayer($(this).data('gc2-id'), $(this).context.checked);
                     e.stopPropagation();
                 })
+            },
+            error: function (response) {
+                alert(JSON.parse(response.responseText).message);
             }
         }); // Ajax call end
         $.ajax({
