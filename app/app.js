@@ -250,7 +250,7 @@ app.get('/meta', function (req, response) {
                                 srid: "900913",
                                 sql: layers[i].options.sql,
                                 cartocss: layers[i].options.cartocss,
-                                layergroup: schemas[u],
+                                layergroup: JSON.parse(jsfile).title,
                                 fieldconf: null,
                                 legend: layers[i].legend
 
