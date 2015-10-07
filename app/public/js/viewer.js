@@ -211,7 +211,7 @@ Viewer = function () {
                                     for (u = 0; u < legend.items.length; u = u + 1) {
                                         if (legend.items[u].name === "Left label") {
                                             classUl.append("<li style='display:inline;'><span class='legend-text'>" + legend.items[u].value + "</span></li>");
-                                        } else if(legend.items[u].name === "Right label"){
+                                        } else if (legend.items[u].name === "Right label") {
                                             rightLabel = "<li style='display:inline;'><span class='legend-text'>" + legend.items[u].value + "</span></li>"
                                         } else {
                                             classUl.append("<li style='display:inline;'><span style='display: inline-block; height: 15px; width: 15px; background-color: " + legend.items[u].value + ";'></span></li>");
@@ -551,7 +551,7 @@ Viewer = function () {
 // Draw end
     init = function (me) {
         createSearch(me);
-        var metaData, layers = {}, extent = null, i,
+        var metaData, layers = {}, extent = null, i, customBaseLayer,
             socket = io.connect();
         socket.on(socketId, function (data) {
             if (typeof data.num !== "undefined") {
@@ -574,12 +574,28 @@ Viewer = function () {
         }
         cloud.bingApiKey = window.bingApiKey;
         cloud.digitalGlobeKey = window.digitalGlobeKey;
+        var bl;
         for (i = 0; i < window.setBaseLayers.length; i = i + 1) {
-            if (typeof window.setBaseLayers[i].restrictTo === "undefined" || window.setBaseLayers[i].restrictTo.indexOf(schema) > -1) {
-                cloud.addBaseLayer(window.setBaseLayers[i].id, window.setBaseLayers[i].db);
+            bl = window.setBaseLayers[i];
+            if (typeof bl.type !== "undefined" && bl.type === "XYZ") {
+                customBaseLayer = new L.TileLayer(bl.url);
+                customBaseLayer.baseLayer = true;
+                customBaseLayer.id = bl.id;
+                cloud.addLayer(customBaseLayer, bl.name, true);
                 $("#base-layer-list").append(
-                    "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + window.setBaseLayers[i].id + "')\">" + window.setBaseLayers[i].name + "</a></li>"
+                    "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + bl.id + "')\">" + bl.name + "</a></li>"
                 );
+            } else if (typeof bl.restrictTo === "undefined" || bl.restrictTo.indexOf(schema) > -1) {
+                cloud.addBaseLayer(bl.id, bl.db);
+                $("#base-layer-list").append(
+                    "<li><a href=\"javascript:void(0)\" onclick=\"MapCentia.setBaseLayer('" + bl.id + "')\">" + bl.name + "</a></li>"
+                );
+            }
+        }
+
+        if (typeof window.customBaseLayers === 'object') {
+            for (i = 0; i < window.customBaseLayers.tms.length; i = i + 1) {
+
             }
         }
 

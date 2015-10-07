@@ -329,7 +329,7 @@ app.get('/baselayerjs', function (req, response) {
                 mergeSchemata: null
             };
             jsfile = "window.gc2Options = " + JSON.stringify(gc2Options) + ";";
-            jsfile += 'window.setBaseLayers = [{"id":"osm","name":"OSM"},{"id":"stamenToner","name":"Stamen Toner"}];';
+            jsfile += 'window.setBaseLayers = ' + JSON.stringify(nodeConfig.baseLayers);
             response.header('content-type', 'application/json');
             response.send(jsfile);
             break;
