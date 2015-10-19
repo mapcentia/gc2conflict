@@ -578,7 +578,9 @@ Viewer = function () {
         for (i = 0; i < window.setBaseLayers.length; i = i + 1) {
             bl = window.setBaseLayers[i];
             if (typeof bl.type !== "undefined" && bl.type === "XYZ") {
-                customBaseLayer = new L.TileLayer(bl.url);
+                customBaseLayer = new L.TileLayer(bl.url, {
+                    attribution: bl.attribution
+                });
                 customBaseLayer.baseLayer = true;
                 customBaseLayer.id = bl.id;
                 cloud.addLayer(customBaseLayer, bl.name, true);
