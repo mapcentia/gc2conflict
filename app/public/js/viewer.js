@@ -595,7 +595,7 @@ Viewer = function () {
                 for (i = 0; i < response.data.length; ++i) {
                     groups[i] = response.data[i].layergroup;
                 }
-                arr = array_unique(groups);
+                arr = array_unique(groups).reverse();
                 for (var u = 0; u < response.data.length; ++u) {
                     isBaseLayer = response.data[u].baselayer ? true : false;
                     layers[[response.data[u].f_table_schema + "." + response.data[u].f_table_name]] = cloud.addTileLayers({
