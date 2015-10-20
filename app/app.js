@@ -149,7 +149,7 @@ app.post('/print', function (req, response) {
             }
         },
         staticMapReq = http.request(options, function (res) {
-            var str = '';
+            var str = '', url;
             res.setEncoding('binary');
             res.on('data', function (chunk) {
                 str += chunk
@@ -169,7 +169,22 @@ app.post('/print', function (req, response) {
                                 if (error !== null) {
                                     console.log(error);
                                 }
-                                response.send({success: true});
+                                // Get legend
+                                url = "http://cowi.mapcentia.com/api/v1/legend/json/odder/?l=stamenToner;kommuneplan.kpplandk2;kommuneplan.theme_pdk_lokalplan_vedtaget_v&jsonp_callback=jQuery110009809932704083622_1445324218261&_=1445324218270";
+                                http.get(url, function (res) {
+                                    var chunks = [];
+                                    res.on('data', function (chunk) {
+                                        chunks.push(chunk);
+                                    });
+                                    res.on("end", function () {
+                                        var html = new Buffer.concat(chunks);
+                                        console.log(html)
+                                        response.send({success: true});
+                                    });
+                                }).on("error", function () {
+                                    callback(null);
+                                });
+
                             });
                         });
                     });
@@ -365,7 +380,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(8080, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
