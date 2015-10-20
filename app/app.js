@@ -122,22 +122,30 @@ app.get('/html', function (req, res) {
                 }
             }
         }
-        json = {
-            hits: hits,
-            noHits: noHits,
-            text: obj.text,
-            dateTime: obj.dateTime,
-            metaDataKeys: metaDataKeys,
-            id: req.query.id,
-            addr: addr
-        };
-        var input = json;
-        input.i18n = gc2i18n;
-        res.render('static', {layout: 'layout', json: input});
+        fs.readFile(__dirname + '/tmp/legend_' + req.query.id, 'utf8', function (err, data) {
+            if (err) {
+                return console.log(err);
+            }
+            var legend = JSON.parse(data).html;
+            console.log(legend);
+            json = {
+                hits: hits,
+                noHits: noHits,
+                text: obj.text,
+                dateTime: obj.dateTime,
+                metaDataKeys: metaDataKeys,
+                id: req.query.id,
+                addr: addr,
+                legend: legend
+            };
+            var input = json;
+            input.i18n = gc2i18n;
+            res.render('static', {layout: 'layout', json: input});
+        });
     });
 });
 app.post('/print', function (req, response) {
-    var postData = JSON.stringify(req.body.json), id = req.body.id,
+    var postData = JSON.stringify(req.body.json), json = req.body.json, id = req.body.id, layersNames = [],
         options = {
             method: 'POST',
             host: nodeConfig.print.host,
@@ -170,7 +178,12 @@ app.post('/print', function (req, response) {
                                     console.log(error);
                                 }
                                 // Get legend
-                                url = "http://cowi.mapcentia.com/api/v1/legend/json/odder/?l=stamenToner;kommuneplan.kpplandk2;kommuneplan.theme_pdk_lokalplan_vedtaget_v&jsonp_callback=jQuery110009809932704083622_1445324218261&_=1445324218270";
+                                for (var i = 0; i < json.layers.length; i++) {
+                                    if (typeof json.layers[i].layer !== "undefined") {
+                                        layersNames.push(json.layers[i].layer)
+                                    }
+                                }
+                                url = "http://" + nodeConfig.host + "/api/v1/legend/html/" + "mydb" + "/?l=" + layersNames.join(",");
                                 http.get(url, function (res) {
                                     var chunks = [];
                                     res.on('data', function (chunk) {
@@ -178,8 +191,8 @@ app.post('/print', function (req, response) {
                                     });
                                     res.on("end", function () {
                                         var html = new Buffer.concat(chunks);
-                                        console.log(html);
-                                        fs.writeFile(__dirname + "/public/tmp/legend_" + id + "", JSON.stringify(html, null, 4), function (err) {
+                                        console.log(html.toString());
+                                        fs.writeFile(__dirname + "/tmp/legend_" + id + "", html.toString(), function (err) {
                                             if (err) {
                                                 console.log(err);
                                             } else {
@@ -189,8 +202,8 @@ app.post('/print', function (req, response) {
                                         });
 
                                     });
-                                }).on("error", function () {
-                                    callback(null);
+                                }).on("error", function (e) {
+                                    console.log(e)
                                 });
 
                             });

@@ -11,6 +11,7 @@ html
                         h2 #{json.text}
                         p #{json.dateTime}
                         img(style="width: 800px" src= "/tmp/" + json.id + ".png")
+                        div(style="float:right") !{json.legend}
                         h3 #{json.i18n.dict["Conflicts"]}
                         table(class="table")
                             each val, key in json.hits
