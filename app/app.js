@@ -178,8 +178,16 @@ app.post('/print', function (req, response) {
                                     });
                                     res.on("end", function () {
                                         var html = new Buffer.concat(chunks);
-                                        console.log(html)
-                                        response.send({success: true});
+                                        console.log(html);
+                                        fs.writeFile(__dirname + "/public/tmp/legend_" + id + "", JSON.stringify(html, null, 4), function (err) {
+                                            if (err) {
+                                                console.log(err);
+                                            } else {
+                                                console.log("Legend json saved");
+                                                response.send({success: true});
+                                            }
+                                        });
+
                                     });
                                 }).on("error", function () {
                                     callback(null);
