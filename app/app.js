@@ -191,12 +191,11 @@ app.post('/print', function (req, response) {
                                     });
                                     res.on("end", function () {
                                         var html = new Buffer.concat(chunks);
-                                        console.log(html.toString());
                                         fs.writeFile(__dirname + "/tmp/legend_" + id + "", html.toString(), function (err) {
                                             if (err) {
                                                 console.log(err);
                                             } else {
-                                                console.log("Legend json saved");
+                                                console.log("Legend saved.");
                                                 response.send({success: true});
                                             }
                                         });
@@ -401,7 +400,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(8080, function () {
+var server = app.listen(80, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);
