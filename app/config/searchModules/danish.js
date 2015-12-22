@@ -36,7 +36,7 @@ createSearch = function (me) {
 
             (function ca() {
                 $.ajax({
-                    url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/aws/' + type1,
+                    url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/aws4/' + type1,
                     data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase().replace(",", "")) + '","default_operator":"AND"}},"filter":{"term":{"municipalitycode":"0' + komKode + '"}}}}}',
                     contentType: "application/json; charset=utf-8",
                     scriptCharset: "utf-8",
@@ -104,7 +104,7 @@ createSearch = function (me) {
                 placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM matrikel.jordstykke WHERE gid=" + gids[datum.value];
             }
             if (name === "adresse") {
-                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang WHERE gid=" + gids[datum.value];
+                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang4 WHERE gid=" + gids[datum.value];
             }
             searchString = datum.value;
             placeStore.load();
