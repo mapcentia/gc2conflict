@@ -27,7 +27,7 @@ module.exports = function (grunt) {
                     }
                 },
                 files: {
-                    "app/public/js/templates.js": ["app/public/templates/body.tmpl"]
+                    "app/public/js/templates.js": ["app/public/templates/body.tmpl", "app/public/templates/embed.tmpl"]
                 }
             }
         },

@@ -1,19 +1,19 @@
 createSearch = function (me) {
     var type1, type2, gids = [], searchString,
-        komKode = me.urlVars.komkode,
-        placeStore = new geocloud.geoJsonStore({
-            host: "http://eu1.mapcentia.com",
-            db: "dk",
-            sql: null,
-            pointToLayer: null,
-            onLoad: function () {
-                //cloud.zoomToExtentOfgeoJsonStore(placeStore);
-                me.clearDrawItems()
-                me.clearInfoItems();
-                me.drawnItems.addLayer(placeStore.layer);
-                me.makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
-            }
-        });
+        komKode = me.urlVars.komkode || conflictConfig.komKode;
+    var placeStore = new geocloud.geoJsonStore({
+        host: "http://eu1.mapcentia.com",
+        db: "dk",
+        sql: null,
+        pointToLayer: null,
+        onLoad: function () {
+            //cloud.zoomToExtentOfgeoJsonStore(placeStore);
+            me.clearDrawItems();
+            me.clearInfoItems();
+            me.drawnItems.addLayer(placeStore.layer);
+            me.makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
+        }
+    });
     $('#custom-search').typeahead({
         highlight: false
     }, {

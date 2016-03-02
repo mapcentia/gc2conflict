@@ -114,8 +114,8 @@ Viewer = function () {
     });
     hash = decodeURIComponent(geocloud.urlHash);
     urlVars = geocloud.urlVars;
-    db = urlVars.db;
-    schema = urlVars.schema;
+    db = urlVars.db || conflictConfig.db;
+    schema = urlVars.schema || conflictConfig.schema;
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
@@ -566,7 +566,24 @@ Viewer = function () {
                     layerStrs.push("map_visibility_" + layers[i] + "=true");
                 }
             }
-            req = "map_x=" + center.x + "&map_y=" + center.y + "&map_zoom=" + zoom + "&" + layerStrs.join("&");
+            var transformPoint = function (lat, lon, s, d) {
+                var p = [];
+                if (typeof Proj4js === "object") {
+                    var source = new Proj4js.Proj(s);    //source coordinates will be in Longitude/Latitude
+                    var dest = new Proj4js.Proj(d);
+                    p = new Proj4js.Point(lat, lon);
+                    Proj4js.transform(source, dest, p);
+                }
+                else {
+                    p.x = null;
+                    p.y = null;
+                }
+                return p;
+            };
+            Proj4js.defs["EPSG:25832"] = "+title=  ETRF89 / UTM zone 32N EPSG:25832 +proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
+            var p = transformPoint(center.x, center.y, "EPSG:900913", "EPSG:25832");
+
+            req = "map_x=" + p.x + "&map_y=" + p.y + "&map_zoom=" + (zoom - 6) + "&" + layerStrs.join("&");
             window.open(hostname + "/apps/mapclient/" + db + "/" + schema + "?" + req);
         });
 
