@@ -106,8 +106,9 @@ Viewer = function () {
         }
     };
 
-    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, cloud, db, schema, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId, geomStr, urlVars;
+    var init, switchLayer, setBaseLayer, addLegend, autocomplete, hostname, nodeHostname, cloud, db, schema, hash, osm, qstore = [], anchor, drawLayer, drawControl, zoomControl, metaDataKeys = [], metaDataKeysTitle = [], awesomeMarker, metaDataReady = false, settingsReady = false, makeConflict, socketId, drawnItems = new L.FeatureGroup(), infoItems = new L.FeatureGroup(), bufferItems = new L.FeatureGroup(), dataItems = new L.FeatureGroup(), drawing = false, searchFinish, zoomToFeature, fileId, geomStr, urlVars;
     hostname = window.browserConfig.host;
+    nodeHostname = window.browserConfig.nodeHost;
     socketId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -361,7 +362,7 @@ Viewer = function () {
         $(".print-spinner").show();
         $('#result .btn').attr('disabled', true);
         $.ajax({
-            url: "/intersection",
+            url: nodeHostname + "/intersection",
             data: "db=" + db +
             "&schema=" + schema +
             "&wkt=" + Terraformer.WKT.convert(geoJSON.geometry) +
@@ -476,7 +477,7 @@ Viewer = function () {
     init = function (me) {
         createSearch(me);
         var metaData, layers = {}, extent = null, i,
-            socket = io.connect();
+            socket = io.connect(nodeHostname);
         socket.on(socketId, function (data) {
             if (typeof data.num !== "undefined") {
                 $("#progress").html(data.num);
