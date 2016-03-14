@@ -72,7 +72,7 @@ createSearch = function (me) {
             (function ca() {
                 $.ajax({
                     url: 'http://eu1.mapcentia.com/api/v1/elasticsearch/search/dk/matrikel/' + type2,
-                    data: '&q={"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase()) + '","default_operator":"AND"}},"filter":{"term":{"komkode":"' + komKode + '"}}}}}',
+                    data: '&q={"sort":[{"sort_string":"asc"}],"query":{"filtered":{"query":{"query_string":{"default_field":"string","query":"' + encodeURIComponent(query.toLowerCase()) + '","default_operator":"AND"}},"filter":{"term":{"komkode":"' + komKode + '"}}}}}',
                     contentType: "application/json; charset=utf-8",
                     scriptCharset: "utf-8",
                     dataType: 'jsonp',
