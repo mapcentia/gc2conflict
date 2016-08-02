@@ -9,6 +9,10 @@ L.drawLocal = {
                 title: 'Delete last point drawn',
                 text: 'Delete last point'
             },
+            finish: {
+                title: __('Finish drawing.'),
+                text: __('Finish')
+            },
             buttons: {
                 polyline: 'Draw a polyline',
                 polygon: 'Draw a polygon',
