@@ -461,6 +461,9 @@ Viewer = function () {
                 }
                 if (zoomToBuffer) {
                     cloud.map.fitBounds(bufferGeom.getBounds());
+                    if (cloud.map.getZoom() > 18) {
+                        cloud.map.setZoom(18);
+                    }
                 }
                 geomStr = response.geom;
             }
