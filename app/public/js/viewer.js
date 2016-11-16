@@ -466,6 +466,9 @@ Viewer = function () {
                     }
                 }
                 geomStr = response.geom;
+                if (hitsCount === 0) {
+                    alert("Ingen konflikter");
+                }
             }
         }); // Ajax call end
     };
