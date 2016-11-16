@@ -404,7 +404,7 @@ Viewer = function () {
                                 hitsCount++;
                                 if (v.data.length > 0) {
                                     table1 = $("<table class='table table-data'/>");
-                                    hitsData.append("<h3>" + title + " (" + v.data.length + ")</h3>");
+                                    hitsData.append("<h3 style='display: inline-block;'>" + title + " (" + v.data.length + ")</h3> <input data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "' type='checkbox'>");
                                     $.each(v.data, function (u, row) {
                                         var key = null, fid = null;
                                         tr = $("<tr/>");
