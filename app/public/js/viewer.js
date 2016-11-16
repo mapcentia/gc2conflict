@@ -469,6 +469,7 @@ Viewer = function () {
                 if (hitsCount === 0) {
                     alert("Ingen konflikter");
                 }
+                $("#result-content").show();
             }
         }); // Ajax call end
     };
