@@ -265,7 +265,7 @@ app.post('/intersection', function (req, response) {
                     geomField = metaDataFinal.data[count].f_geometry_column;
                     table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
                     if (buffer > -1000) {
-                        sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_GeogFromText($1), ST_Buffer(geography(ST_transform(" + geomField + ",4326)),$2), 0);";
+                        sql = "SELECT geography(ST_transform(" + geomField + ",4326)) as _gc2_geom, * FROM " + table + " WHERE ST_DWithin(ST_Buffer(ST_GeogFromText($1),$2), geography(ST_transform(" + geomField + ",4326)), 0);";
                         bindings = [wkt, buffer];
                     } else {
                         sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
