@@ -392,7 +392,7 @@ Viewer = function () {
                 showPrintBtn();
                 showGeomaticBtn();
                 $.each(response.hits, function (i, v) {
-                        var table = i.split(".")[1], table1, table2, tr, td,
+                        var table = i.split(".")[1], table1, table2, tr, td, fieldConf,
                             title = (typeof metaDataKeys[table].f_table_title !== "undefined" && metaDataKeys[table].f_table_title !== "" && metaDataKeys[table].f_table_title !== null) ? metaDataKeys[table].f_table_title : table;
                         if (v.error === null) {
                             if (metaDataKeys[table].meta_url) {
@@ -405,6 +405,7 @@ Viewer = function () {
                                 if (v.data.length > 0) {
                                     table1 = $("<table class='table table-data'/>");
                                     hitsData.append("<h3 style='display: inline-block;'>" + title + " (" + v.data.length + ")</h3> <input data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "' type='checkbox'>");
+                                    fieldConf = (typeof metaDataKeys[table].fieldconf !== "undefined" && metaDataKeys[table].fieldconf !== "" ) ? $.parseJSON(metaDataKeys[table].fieldconf) : null;
                                     $.each(v.data, function (u, row) {
                                         var key = null, fid = null;
                                         tr = $("<tr/>");
@@ -412,7 +413,12 @@ Viewer = function () {
                                         table2 = $("<table class='table'/>");
                                         $.each(row, function (n, field) {
                                             if (!field.key) {
-                                                table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>")
+                                                console.log(fieldConf[field.name])
+                                                if (!fieldConf[field.name].link) {
+                                                    table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>");
+                                                } else {
+                                                    table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td><a target='_blank' href='" + field.value + "'>Link</a></td></tr>");
+                                                }
                                             } else {
                                                 key = field.name;
                                                 fid = field.value;
@@ -573,7 +579,7 @@ Viewer = function () {
             clearAllItems();
         });
 
-        $("#mapclient-btn").on("click", function () {
+        $("#mapclient-btn_").on("click", function () {
             var center = cloud.getCenter(), zoom = cloud.getZoom(), req, layers = cloud.getVisibleLayers(true).split(";"),
                 layerStrs = [];
 
@@ -601,6 +607,12 @@ Viewer = function () {
 
             req = "map_x=" + p.x + "&map_y=" + p.y + "&map_zoom=" + (zoom - 6) + "&" + layerStrs.join("&");
             window.open(hostname + "/apps/mapclient/" + db + "/" + schema + "?" + req);
+        });
+
+        $("#vidi-btn").on("click", function () {
+            var center = cloud.map.getCenter(), zoom = cloud.getZoom(),
+                overlays = cloud.getVisibleLayers().split(";"), baseLayer = cloud.getBaseLayerName();
+            window.open(window.browserConfig.vidiUrl + "/app/" + db + "/" + schema + "/#" + baseLayer + "/" + zoom + "/" + center.lng + "/" + center.lat + "/" + overlays.join(","));
         });
 
         if (typeof window.browserConfig.enableGeomatic === "undefined" || window.browserConfig.enableGeomatic === false) {
@@ -657,7 +669,7 @@ Viewer = function () {
                                 var text = (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title;
                                 if (response.data[u].baselayer) {
                                     $("#base-layer-list").append(
-                                        "<li class='base-layer-item list-group-item' data-gc2-base-id='" +  response.data[u].f_table_schema + "." + response.data[u].f_table_name  + "'>" + text + "<span class='fa fa-check' aria-hidden='true'></span></li>"
+                                        "<li class='base-layer-item list-group-item' data-gc2-base-id='" + response.data[u].f_table_schema + "." + response.data[u].f_table_name + "'>" + text + "<span class='fa fa-check' aria-hidden='true'></span></li>"
                                     );
                                 }
                                 else {
@@ -681,10 +693,10 @@ Viewer = function () {
                 $(".base-layer-item").on("click", function (e) {
                     setBaseLayer($(this).data('gc2-base-id'));
                     e.stopPropagation();
-                    $(".base-layer-item").css("background-color","white");
+                    $(".base-layer-item").css("background-color", "white");
                     $(".base-layer-item span").hide();
 
-                    $(this).css("background-color","#f5f5f5");
+                    $(this).css("background-color", "#f5f5f5");
                     $(this).children("span").show();
                 });
             }
@@ -854,8 +866,8 @@ Viewer = function () {
                         var sql, f_geometry_column = metaDataKeys[value.split(".")[1]].f_geometry_column;
                         if (geoType === "RASTER") {
                             sql = "SELECT foo.the_geom,ST_Value(rast, foo.the_geom) As band1, ST_Value(rast, 2, foo.the_geom) As band2, ST_Value(rast, 3, foo.the_geom) As band3 " +
-                            "FROM " + value + " CROSS JOIN (SELECT ST_transform(ST_GeomFromText('POINT(" + coords.x + " " + coords.y + ")',3857)," + srid + ") As the_geom) As foo " +
-                            "WHERE ST_Intersects(rast,the_geom) ";
+                                "FROM " + value + " CROSS JOIN (SELECT ST_transform(ST_GeomFromText('POINT(" + coords.x + " " + coords.y + ")',3857)," + srid + ") As the_geom) As foo " +
+                                "WHERE ST_Intersects(rast,the_geom) ";
                         } else {
 
                             if (geoType !== "POLYGON" && geoType !== "MULTIPOLYGON") {

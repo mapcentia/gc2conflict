@@ -12,6 +12,7 @@ createSearch = function (me) {
             me.clearInfoItems();
             me.drawnItems.addLayer(placeStore.layer);
             me.makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
+            $("#ejdnr").html(" (Samlet ejendom nr.: " + placeStore.geoJSON.features[0].properties.esr_ejdnr + ")");
         }
     });
     $('#custom-search').typeahead({
@@ -101,10 +102,10 @@ createSearch = function (me) {
             placeStore.reset();
 
             if (name === "matrikel") {
-                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM matrikel.jordstykke WHERE gid=" + gids[datum.value];
+                placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE gid=" + gids[datum.value] + ") group by esr_ejdnr";
             }
             if (name === "adresse") {
-                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM adresse.adgang4 WHERE gid=" + gids[datum.value];
+                    placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE (the_geom && (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + ")) AND ST_Intersects(the_geom, (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + "))) group by esr_ejdnr";
             }
             searchString = datum.value;
             placeStore.load();
