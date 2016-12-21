@@ -579,7 +579,7 @@ Viewer = function () {
             clearAllItems();
         });
 
-        $("#mapclient-btn_").on("click", function () {
+        $("#mapclient-btn").on("click", function () {
             var center = cloud.getCenter(), zoom = cloud.getZoom(), req, layers = cloud.getVisibleLayers(true).split(";"),
                 layerStrs = [];
 
