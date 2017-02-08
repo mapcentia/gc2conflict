@@ -2,12 +2,12 @@
 <div id="container">
     <div id="places">
         <input id="custom-search" class="typeahead" type="text" placeholder="{{Address}}">
+        <span id="searchclear"><span id="progress-container"><span id="progress"></span><span id="spinner">&nbsp;<span><img
+                src='https://gc2.mapcentia.com/assets/images/ajax_loader.gif' class='spinner'/></span></span></span></span>
     </div>
     <div id="map"></div>
     <div id="side-panel">
         <div id="top">
-            <div id="progress-container"><span id="progress"></span><span id="spinner">&nbsp;<span><img
-                    src='https://gc2.mapcentia.com/assets/images/ajax_loader.gif' class='spinner'/></span></span></div>
             <div id="buffer-container">
                 <div class="form-inline">
                     <div class="form-group">
@@ -15,7 +15,7 @@
                         <input id="buffer" type="text" class="form-control" placeholder="{{Meters}}">
                     </div>
                     <button class="btn btn-primary" id="remove-all-btn">{{Clear map}}</button>
-                    <button class="btn btn-warning" id="vidi-btn">Vidi</button>
+                    <button class="btn btn-warning" id="vidi-btn">Avanceret kort</button>
                 </div>
             </div>
         </div>
@@ -110,6 +110,6 @@
             </div>
         </div>
     </div>
-
+    <div style="position: absolute; top: 70px; left: 10px; background-color: white; padding: 5px; border: #bcbfe2;" id="legend-content"><div id="legend"></div></div>
 </div>
 
