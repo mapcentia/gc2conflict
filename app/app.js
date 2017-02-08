@@ -265,7 +265,7 @@ app.post('/intersection', function (req, response) {
                     geomField = metaDataFinal.data[count].f_geometry_column;
                     table = metaDataFinal.data[count].f_table_schema + "." + metaDataFinal.data[count].f_table_name;
                     if (buffer > -1000) {
-                        sql = "SELECT * FROM " + table + " WHERE ST_intersects(   ST_transform(ST_Buffer(ST_Transform(ST_Geomfromtext($1,4326),258" + zoneNumber + "),$2),900913)   , ST_transform(" + geomField + ",900913))";
+                        sql = "SELECT * FROM " + table + " WHERE ST_transform(ST_Buffer(ST_Transform(ST_Geomfromtext($1,4326),258" + zoneNumber + "),$2),900913) && ST_transform(" + geomField + ",900913) AND ST_intersects(ST_transform(ST_Buffer(ST_Transform(ST_Geomfromtext($1,4326),258" + zoneNumber + "),$2),900913), ST_transform(" + geomField + ",900913))";
                         bindings = [wkt, buffer];
                     } else {
                         sql = "SELECT * FROM " + table + " WHERE ST_transform(" + geomField + ",900913) && ST_transform(ST_geomfromtext($1,4326),900913) AND ST_intersects(ST_transform(" + geomField + ",900913),ST_transform(ST_geomfromtext($1,4326),900913))";
@@ -365,7 +365,7 @@ app.post('/intersection', function (req, response) {
     });
 });
 
-var server = app.listen(80, function () {
+var server = app.listen(9000, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log('App listening at http://%s:%s', host, port);

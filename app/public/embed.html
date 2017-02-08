@@ -19,7 +19,6 @@
     <link rel="stylesheet" href="http://127.0.0.1:9000/css/embed.css" type="text/css">
     <!-- /build -->
     <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans+Condensed:300' type='text/css'>
-
 </head>
 <body>
 <div id="main">
@@ -47,7 +46,7 @@
         komKode: "727"
     };
     window.go = function () {
-        $("#main").html(this.Templates["embed.tmpl"].render(gc2i18n.dict));
+        $("#main").html(this.Templates["embed_min.tmpl"].render(gc2i18n.dict));
         window.MapCentia = new Viewer();
         MapCentia.init(window.MapCentia);
         $("[data-toggle=tooltip]").tooltip();

@@ -128,11 +128,13 @@ Viewer = function () {
     switchLayer = function (name, visible) {
         if (visible) {
             cloud.showLayer(name);
-            $('*[data-gc2-id="' + name + '"]').next("span").show();
+            $('*[data-gc2-id="' + name + '"]').next("span").hide();
+            $('*[data-gc2-id="' + name + '"]').next("span").next("span").show();
             $('*[data-gc2-id="' + name + '"]').prop('checked', true);
         } else {
             cloud.hideLayer(name);
-            $('*[data-gc2-id="' + name + '"]').next("span").hide();
+            $('*[data-gc2-id="' + name + '"]').next("span").show();
+            $('*[data-gc2-id="' + name + '"]').next("span").next("span").hide();
             $('*[data-gc2-id="' + name + '"]').prop('checked', false);
         }
         addLegend();
@@ -404,7 +406,7 @@ Viewer = function () {
                                 hitsCount++;
                                 if (v.data.length > 0) {
                                     table1 = $("<table class='table table-data'/>");
-                                    hitsData.append("<h3 style='display: inline-block;'>" + title + " (" + v.data.length + ")</h3> <input data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "' type='checkbox'>");
+                                    hitsData.append("<div class='hits-data-h'><span class='checkbox'><label>" + title + " (" + v.data.length + ")<input style='display: none' type='checkbox' data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "'> <span class='fa fa-square-o' aria-hidden='true' style='display: inline;'></span><span class='fa fa-check-square-o' aria-hidden='true' style='display: none;'></span></label></span></div>");
                                     fieldConf = (typeof metaDataKeys[table].fieldconf !== "undefined" && metaDataKeys[table].fieldconf !== "" ) ? $.parseJSON(metaDataKeys[table].fieldconf) : null;
                                     $.each(v.data, function (u, row) {
                                         var key = null, fid = null;
@@ -413,7 +415,6 @@ Viewer = function () {
                                         table2 = $("<table class='table'/>");
                                         $.each(row, function (n, field) {
                                             if (!field.key) {
-                                                console.log(fieldConf[field.name])
                                                 if (!fieldConf[field.name].link) {
                                                     table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>");
                                                 } else {
@@ -524,7 +525,7 @@ Viewer = function () {
             if (typeof window.setBaseLayers[i].restrictTo === "undefined" || window.setBaseLayers[i].restrictTo.indexOf(schema) > -1) {
                 cloud.addBaseLayer(window.setBaseLayers[i].id, window.setBaseLayers[i].db);
                 $("#base-layer-list").append(
-                    "<li class='base-layer-item list-group-item' data-gc2-base-id='" + window.setBaseLayers[i].id + "'>" + window.setBaseLayers[i].name + "<span class='fa fa-check' aria-hidden='true'></span></li>"
+                    "<li class='base-layer-item list-group-item' data-gc2-base-id='" + window.setBaseLayers[i].id + "'>" + window.setBaseLayers[i].name + "<span></span><span class='fa fa-check' aria-hidden='true'></span></li>"
                 );
             }
         }
@@ -669,11 +670,11 @@ Viewer = function () {
                                 var text = (response.data[u].f_table_title === null || response.data[u].f_table_title === "") ? response.data[u].f_table_name : response.data[u].f_table_title;
                                 if (response.data[u].baselayer) {
                                     $("#base-layer-list").append(
-                                        "<li class='base-layer-item list-group-item' data-gc2-base-id='" + response.data[u].f_table_schema + "." + response.data[u].f_table_name + "'>" + text + "<span class='fa fa-check' aria-hidden='true'></span></li>"
+                                        "<li class='base-layer-item list-group-item' data-gc2-base-id='" + response.data[u].f_table_schema + "." + response.data[u].f_table_name + "'>" + text + "<span></span><span class='fa fa-check' aria-hidden='true'></span></li>"
                                     );
                                 }
                                 else {
-                                    $("#collapse" + base64name).append('<li class="layer-item list-group-item"><span class="checkbox"><label style="display: block;"><input style="display: none" type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '<span class="fa fa-check" aria-hidden="true"></span></label></span></li>');
+                                    $("#collapse" + base64name).append('<li class="layer-item list-group-item"><span class="checkbox"><label style="display: block;"><input style="display: none" type="checkbox" id="' + response.data[u].f_table_name + '" data-gc2-id="' + response.data[u].f_table_schema + "." + response.data[u].f_table_name + '">' + text + '<span></span><span class="fa fa-check" aria-hidden="true"></span></label></span></li>');
                                     l.push({});
                                 }
                             }
