@@ -609,15 +609,19 @@ div.olControlZoom {
 .table-data > tbody > tr {
     border-top: 1px solid rgb(230, 230, 230);
 }
-.leaflet-control-print{
+
+.leaflet-control-print {
     display: none !important;
 }
+
 .base-layer-item {
     cursor: pointer;
 }
+
 .layer-item {
     padding: 0 !important;
 }
+
 .layer-item label {
     padding: 10px 15px;
 }
@@ -626,6 +630,7 @@ div.olControlZoom {
     float: right;
     display: none;
 }
+
 .layer-item .fa {
     float: right;
     display: none;
@@ -640,13 +645,13 @@ div.olControlZoom {
 }
 
 .mapcentia * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
 }
+
 .mapcentia ul {
     list-style: none;
 }
+
 #searchclear {
     position: absolute;
     right: 8px;
@@ -663,4 +668,10 @@ div.olControlZoom {
 
 .hits-data-h {
     font-size: 24px;
+}
+
+ #legend * {
+
+    margin: 0;
+    padding: 0;
 }
