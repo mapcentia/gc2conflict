@@ -739,7 +739,16 @@ Viewer = function () {
                         cloud.zoomToPoint(p.x, p.y, hashArr[1]);
                     }
                 } else {
-                    setBaseLayer(window.setBaseLayers[0].id);
+                    setBaseLayer(conflictConfig.baseLayer || window.setBaseLayers[0].id);
+                    if (conflictConfig.layers) {
+                        $.each(conflictConfig.layers, function (i, v) {
+                            setTimeout(function () {
+                                switchLayer(v, true);
+                                $("#" + v.replace(schema + ".", "")).attr('checked', true);
+                                $('*[data-gc2-id="' + v + '"]').attr('checked', true);
+                            }, 300);
+                        })
+                    }
                     if (extent !== null) {
                         cloud.zoomToExtent(extent);
                     } else {
