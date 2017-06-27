@@ -135,8 +135,6 @@ createSearch = function (me) {
         highlight: false
     }, plugs);
     $('#custom-search').bind('typeahead:selected', function (obj, datum, name) {
-        console.log(type2);
-        console.log(name);
         if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel") || (type3 === "kpplandk2" && name === "kpplandk2")) {
             placeStore.reset();
 
