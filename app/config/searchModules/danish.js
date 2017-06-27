@@ -12,7 +12,9 @@ createSearch = function (me) {
             me.clearInfoItems();
             me.drawnItems.addLayer(placeStore.layer);
             me.makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
-            $("#ejdnr").html(" (Samlet ejendom nr.: " + placeStore.geoJSON.features[0].properties.esr_ejdnr + ")");
+            if (placeStore.geoJSON.features[0].properties.esr_ejdnr !== undefined) {
+                $("#ejdnr").html(" (Samlet ejendom nr.: " + placeStore.geoJSON.features[0].properties.esr_ejdnr + ")");
+            }
         }
     });
 
