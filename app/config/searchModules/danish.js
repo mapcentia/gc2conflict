@@ -14,6 +14,8 @@ createSearch = function (me) {
             me.makeConflict({geometry: $.parseJSON(placeStore.geoJSON.features[0].properties.geojson)}, 0, true, searchString);
             if (placeStore.geoJSON.features[0].properties.esr_ejdnr !== undefined) {
                 $("#ejdnr").html(" (Samlet ejendom nr.: " + placeStore.geoJSON.features[0].properties.esr_ejdnr + ")");
+            } else {
+                $("#ejdnr").empty();
             }
         }
     });
