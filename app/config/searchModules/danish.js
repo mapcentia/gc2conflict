@@ -145,7 +145,7 @@ createSearch = function (me) {
             if (name === "kpplandk2") {
                 placeStore.host = "http://cowi.mapcentia.com";
                 placeStore.db = "esbjerg";
-                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,900913)) as geojson FROM kommuneplan18.kpplandk2_view WHERE gid=" + gids[datum.value];
+                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM kommuneplan18.kpplandk2_view WHERE gid=" + gids[datum.value];
             }
             searchString = datum.value;
             placeStore.load();
