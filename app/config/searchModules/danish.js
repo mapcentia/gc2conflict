@@ -15,9 +15,8 @@ createSearch = function (me) {
             $("#ejdnr").html(" (Samlet ejendom nr.: " + placeStore.geoJSON.features[0].properties.esr_ejdnr + ")");
         }
     });
-    $('#custom-search').typeahead({
-        highlight: false
-    }, {
+
+    plugs = [{
         name: 'adresse',
         displayKey: 'value',
         templates: {
@@ -96,9 +95,45 @@ createSearch = function (me) {
                 })
             })();
         }
-    });
+    }];
+
+    if (conflictConfig.db === "esbjerg") {
+        plugs.push({
+            name: 'kpplandk2',
+            displayKey: 'value',
+            templates: {
+                header: '<h2 class="typeahead-heading">Rammer</h2>'
+            },
+            source: function (query, cb) {
+                var names = [];
+                type2 = "kpplandk2";
+                (function ca() {
+                    $.ajax({
+                        url: 'http://cowi.mapcentia.com/api/v1/elasticsearch/search/esbjerg/kommuneplan18/kpplandk2_view',
+                        data: '&q={"query":{"query_string":{"default_field":"properties.enrid","query":"' + encodeURIComponent(query.toLowerCase()) + '"}}}',
+                        dataType: 'jsonp',
+                        contentType: "application/json; charset=utf-8",
+                        scriptCharset: "utf-8",
+                        jsonp: 'jsonp_callback',
+                        success: function (response) {
+                            $.each(response.hits.hits, function (i, hit) {
+                                var str = hit._source.properties.enrid.replace(/_/g, "-");
+                                gids[str] = hit._source.properties.gid;
+                                names.push({value: str});
+                            });
+                            cb(names);
+                        }
+                    });
+                })();
+            }
+        })
+    }
+
+    $('#custom-search').typeahead({
+        highlight: false
+    }, plugs);
     $('#custom-search').bind('typeahead:selected', function (obj, datum, name) {
-        if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel")) {
+        if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel") || (type2 === "kpplandk2" && name === "kpplandk2")) {
             placeStore.reset();
 
             if (name === "matrikel") {
@@ -106,6 +141,11 @@ createSearch = function (me) {
             }
             if (name === "adresse") {
                     placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE (the_geom && (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + ")) AND ST_Intersects(the_geom, (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + "))) group by esr_ejdnr";
+            }
+            if (name === "kpplandk2") {
+                placeStore.host = "http://cowi.mapcentia.com";
+                placeStore.db = "esbjerg";
+                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,900913)) as geojson FROM kommuneplan18.kpplandk2_view WHERE gid=" + gids[datum.value];
             }
             searchString = datum.value;
             placeStore.load();
