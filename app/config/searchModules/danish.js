@@ -1,5 +1,5 @@
 createSearch = function (me) {
-    var type1, type2, gids = [], searchString,
+    var type1, type2, type3, gids = [], searchString,
         komKode = me.urlVars.komkode || conflictConfig.komKode;
     var placeStore = new geocloud.geoJsonStore({
         host: "http://eu1.mapcentia.com",
@@ -108,7 +108,7 @@ createSearch = function (me) {
             },
             source: function (query, cb) {
                 var names = [];
-                type2 = "kpplandk2";
+                type3 = "kpplandk2";
                 (function ca() {
                     $.ajax({
                         url: 'http://cowi.mapcentia.com/api/v1/elasticsearch/search/esbjerg/kommuneplan18/kpplandk2_view',
@@ -137,7 +137,7 @@ createSearch = function (me) {
     $('#custom-search').bind('typeahead:selected', function (obj, datum, name) {
         console.log(type2);
         console.log(name);
-        if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel") || (type2 === "kpplandk2" && name === "kpplandk2")) {
+        if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel") || (type3 === "kpplandk2" && name === "kpplandk2")) {
             placeStore.reset();
 
             if (name === "matrikel") {
