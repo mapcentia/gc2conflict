@@ -117,8 +117,8 @@ createSearch = function (me) {
                         jsonp: 'jsonp_callback',
                         success: function (response) {
                             $.each(response.hits.hits, function (i, hit) {
-                                var str = hit._source.properties.enrid.replace(/_/g, "-");
-                                gids[str] = hit._source.properties.gid;
+                                var str = hit._source.properties.enrid;
+                                gids[str] = hit._source.properties.enrid;
                                 names.push({value: str});
                             });
                             cb(names);
@@ -145,7 +145,7 @@ createSearch = function (me) {
             if (name === "kpplandk2") {
                 placeStore.host = "http://cowi.mapcentia.com";
                 placeStore.db = "esbjerg";
-                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM kommuneplan18.kpplandk2_view WHERE gid=" + gids[datum.value];
+                placeStore.sql = "SELECT gid,the_geom,ST_asgeojson(ST_transform(the_geom,4326)) as geojson FROM kommuneplan18.kpplandk2_view WHERE enrid=" + gids[datum.value];
             }
             searchString = datum.value;
             placeStore.load();
