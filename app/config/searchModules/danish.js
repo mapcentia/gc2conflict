@@ -135,14 +135,20 @@ createSearch = function (me) {
         highlight: false
     }, plugs);
     $('#custom-search').bind('typeahead:selected', function (obj, datum, name) {
+        console.log(type2);
+        console.log(name);
         if ((type1 === "adresse" && name === "adresse") || (type2 === "jordstykke" && name === "matrikel") || (type2 === "kpplandk2" && name === "kpplandk2")) {
             placeStore.reset();
 
             if (name === "matrikel") {
+                placeStore.host = "http://eu1.mapcentia.com";
+                placeStore.db = "dk";
                 placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE gid=" + gids[datum.value] + ") group by esr_ejdnr";
             }
             if (name === "adresse") {
-                    placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE (the_geom && (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + ")) AND ST_Intersects(the_geom, (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + "))) group by esr_ejdnr";
+                placeStore.host = "http://eu1.mapcentia.com";
+                placeStore.db = "dk";
+                placeStore.sql = "SELECT esr_ejdnr,ST_Multi(ST_Union(the_geom)),ST_asgeojson(ST_transform(ST_Multi(ST_Union(the_geom)),4326)) as geojson FROM matrikel.jordstykke WHERE esr_ejdnr = (SELECT esr_ejdnr FROM matrikel.jordstykke WHERE (the_geom && (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + ")) AND ST_Intersects(the_geom, (SELECT ST_transform(the_geom, 25832) FROM adresse.adgang4 WHERE gid=" + gids[datum.value] + "))) group by esr_ejdnr";
             }
             if (name === "kpplandk2") {
                 placeStore.host = "http://cowi.mapcentia.com";
