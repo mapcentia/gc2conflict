@@ -12,8 +12,8 @@ a {
     background: transparent;
 }
 
-a:active,
-a:hover {
+.gc2conflict a:active,
+.gc2conflict a:hover {
     outline: 0;
 }
 
@@ -64,18 +64,18 @@ th {
     box-sizing: border-box;
 }
 
-a {
+.gc2conflict a {
     color: #428bca;
     text-decoration: none;
 }
 
-a:hover,
-a:focus {
+.gc2conflict a:hover,
+.gc2conflict a:focus {
     color: #2a6496;
     text-decoration: underline;
 }
 
-a:focus {
+.gc2conflict a:focus {
     outline: thin dotted;
     outline: 5px auto -webkit-focus-ring-color;
     outline-offset: -2px;
