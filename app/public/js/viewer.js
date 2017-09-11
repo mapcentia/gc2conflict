@@ -409,22 +409,31 @@ Viewer = function () {
                                     hitsData.append("<div class='hits-data-h'><span class='checkbox'><label>" + title + " (" + v.data.length + ")<input style='display: none' type='checkbox' data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "'> <span class='fa fa-square-o' aria-hidden='true' style='display: inline;'></span><span class='fa fa-check-square-o' aria-hidden='true' style='display: none;'></span></label></span></div>");
                                     fieldConf = (typeof metaDataKeys[table].fieldconf !== "undefined" && metaDataKeys[table].fieldconf !== "" ) ? $.parseJSON(metaDataKeys[table].fieldconf) : null;
                                     $.each(v.data, function (u, row) {
-                                        var key = null, fid = null;
+                                        var key = null, fid = null, out = [];
                                         tr = $("<tr/>");
                                         td = $("<td/>");
                                         table2 = $("<table class='table'/>");
                                         $.each(row, function (n, field) {
                                             if (!field.key) {
                                                 if (!fieldConf[field.name].link) {
-                                                    table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>");
+                                                    out.push([fieldConf[field.name].sort_id, "<tr><td style='width: 100px'>" + field.alias + "</td><td>" + field.value + "</td></tr>"]);
                                                 } else {
-                                                    table2.append("<tr><td style='width: 100px'>" + field.alias + "</td><td><a target='_blank' href='" + field.value + "'>Link</a></td></tr>");
+                                                    out.push([fieldConf[field.name].sort_id, "<tr><td style='width: 100px'>" + field.alias + "</td><td><a target='_blank' href='" + field.value + "'>Link</a></td></tr>"]);
                                                 }
                                             } else {
                                                 key = field.name;
                                                 fid = field.value;
                                             }
                                         });
+
+                                        out.sort(function (a, b) {
+                                            return a[0] - b[0];
+                                        });
+
+                                        $.each(out, function (c, el) {
+                                            table2.append(el[1]);
+                                        });
+
                                         td.append(table2);
                                         tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search'></i></button></td>");
                                         tr.append(td);
