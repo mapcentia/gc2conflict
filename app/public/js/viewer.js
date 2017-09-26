@@ -406,7 +406,7 @@ Viewer = function () {
                                 hitsCount++;
                                 if (v.data.length > 0) {
                                     table1 = $("<table class='table table-data'/>");
-                                    hitsData.append("<div class='hits-data-h'><span class='checkbox'><label>" + title + " (" + v.data.length + ")<input style='display: none' type='checkbox' data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "'> <span class='fa fa-square-o' aria-hidden='true' style='display: inline;'></span><span class='fa fa-check-square-o' aria-hidden='true' style='display: none;'></span></label></span></div>");
+                                    hitsData.append("<div class='hits-data-h'><span class='checkbox'><label>" + title + " (" + v.data.length + ")<input style='display: none' type='checkbox' data-gc2-id='" + metaDataKeys[table].f_table_schema + "." + metaDataKeys[table].f_table_name + "'> <span class='fa fa-square-o icon-check-empty' aria-hidden='true' style='display: inline;'></span><span class='fa fa-check-square-o icon-check' aria-hidden='true' style='display: none;'></span></label></span></div>");
                                     fieldConf = (typeof metaDataKeys[table].fieldconf !== "undefined" && metaDataKeys[table].fieldconf !== "" ) ? $.parseJSON(metaDataKeys[table].fieldconf) : null;
                                     $.each(v.data, function (u, row) {
                                         var key = null, fid = null, out = [];
@@ -435,7 +435,7 @@ Viewer = function () {
                                         });
 
                                         td.append(table2);
-                                        tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search'></i></button></td>");
+                                        tr.append("<td class=''><button type='button' class='btn btn-default btn-xs zoom-to-feature' data-gc2-sf-table='" + i + "' data-gc2-sf-key='" + key + "' data-gc2-sf-fid='" + fid + "'>#" + (u + 1) + " <i class='fa fa-search icon-search'></i></button></td>");
                                         tr.append(td);
                                         table1.append(tr);
                                     });
